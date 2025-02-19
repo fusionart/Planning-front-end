@@ -1,0 +1,42 @@
+.tab-container {
+    display: flex;
+    border-bottom: 2px solid #11558f; /* Stronger bottom border for better contrast */
+    background-color: #f8f8f8; /* Lighter background for better tab visibility */
+    padding: 5px;
+}
+
+.tab-link {
+    padding: 12px 24px;
+    cursor: pointer;
+    border: 2px solid transparent; /* Avoid default border while inactive */
+    border-bottom: none;
+    background-color: #ddd;
+    margin-right: 5px;
+    border-radius: 8px 8px 0 0; /* Rounded top edges for tab shape */
+    font-weight: bold;
+    transition: background-color 0.3s, color 0.3s, border 0.3s;
+    text-decoration: none; /* Removes underline */
+    color: #11558f; /* Dark gray text */
+}
+
+.tab-link:hover {
+    background-color: #cfcfcf; /* Subtle hover effect */
+    color: black; /* Darker text on hover */
+}
+
+.tab-link.active {
+    background-color: #11558f;
+    color: white;
+    border-color: #11558f; /* Give the active tab a strong border */
+    border-bottom: 2px solid white; /* Create illusion of merging with content */
+    font-weight: bold;
+}
+
+.content-container {
+    background-color: #ececec;
+    padding: 20px;
+    border: 2px solid #11558f;
+    border-top: none;
+    border-radius: 0 0 8px 8px; /* Rounded bottom corners */
+    min-height: 200px; /* Ensure content area is visible */
+}

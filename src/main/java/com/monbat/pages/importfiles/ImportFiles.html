@@ -1,0 +1,17 @@
+<wicket:panel>
+    <div wicket:id="feedback"></div>
+    <form wicket:id="form" class="d-grid gap-2 col-6 mx-auto">
+        <div class="mb-3">
+            <input type="file" wicket:id="fileUpload" class="form-control"/>
+        </div>
+        <div class="d-grid gap-2 col-4 mx-auto">
+            <button wicket:id="submitBom" class="btn btn-primary">Upload BOM</button>
+            <button wicket:id="submitMaterial" class="btn btn-primary">Upload Material</button>
+            <button wicket:id="submitProdversion" class="btn btn-primary">Upload Production versions</button>
+            <button wicket:id="submitReadiness" class="btn btn-primary">Upload Readiness</button>
+            <button wicket:id="submitRouting" class="btn btn-primary">Upload Routing</button>
+            <button wicket:id="submitWorkCenterCapacity" class="btn btn-primary">Upload Work center capacity</button>
+        </div>
+        <div wicket:id="progressLabel"></div>
+    </form>
+</wicket:panel>

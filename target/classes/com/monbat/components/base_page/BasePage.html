@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Monbat</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="tabs.css">
+</head>
+<body>
+<!-- Header -->
+<div wicket:id="header"></div>
+
+<!-- Main Layout -->
+<div class="main-layout">
+    <!-- Left Menu Bar -->
+    <div wicket:id="menuBar" class="menu-bar"></div>
+
+    <!-- Center Area -->
+    <div wicket:id="centerArea" class="center-area"></div>
+
+    <!-- Child content placeholder outside centerArea -->
+    <wicket:child/>
+</div>
+
+<!-- Footer -->
+<div wicket:id="footer"></div>
+</body>
+</html>

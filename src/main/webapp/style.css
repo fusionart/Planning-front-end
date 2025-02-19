@@ -1,0 +1,134 @@
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Remove the right scrollbar */
+}
+
+.menu-bar {
+    width: 200px;
+    background-color: #f4f4f4;
+    float: left;
+    padding: 10px;
+    height: 100vh;
+}
+
+.menu-bar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 200px;
+    background-color: #f1f1f1;
+}
+
+.menu-bar ul li {
+    margin: 10px 0;
+}
+
+.menu-bar li a {
+    display: block;
+    color: #000;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+/* Change the link color on hover */
+.menu-bar li a:hover {
+    background-color: #555;
+    color: white;
+}
+
+.center-area {
+    margin-left: 220px; /* Leave space for the menu bar */
+    padding: 20px;
+    margin-top: 40px; /* Adjust this value to prevent overlap with nav and header */
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+header {
+    background-color: #8c8c8c;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+}
+
+nav {
+    position: fixed;
+    z-index: 99;
+    width: 100%;
+    background: #242526;
+    top: 10px; /* Adjust this value based on the height of the header */
+    padding: 0 30px; /* Ensure same margin on the right as on the left */
+}
+
+nav .wrapper {
+    position: relative;
+    max-width: 1300px;
+    padding: 0px 30px;
+/*    height: 70px;*/
+    line-height: 70px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the text horizontally */
+}
+
+.wrapper .nav-links {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-links li {
+    list-style: none;
+}
+
+.nav-links li a {
+    color: #f2f2f2;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 9px 15px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.nav-links li a:hover {
+    background-color: #555;
+    color: white;
+}
+
+.table-container {
+    display: block; /* Ensure it behaves as a block element */
+    height: 600px; /* Adjust based on your needs */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
+    border: 1px solid #ccc; /* Optional border for clarity */
+    width: 100%; /* Ensure it takes full width */
+}
+
+.table-container table {
+    width: 100%; /* Ensure the table fills the container */
+    border-collapse: collapse; /* Prevent unnecessary spacing */
+}
