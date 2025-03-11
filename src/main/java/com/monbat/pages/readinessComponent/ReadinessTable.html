@@ -1,12 +1,12 @@
-<!-- ReadinessTable.html -->
-<wicket:panel>
+<wicket:panel xmlns:wicket="http://www.w3.org/1999/xhtml">
     <form wicket:id="form" class="mb-4">
-        <div class="row mb-3">
-            <div class="col-md-4">
+        <div class="row mb-4">
+            <div class="col-md-3">
                 <div class="input-group">
                     <input type="text" wicket:id="filterField" class="form-control" placeholder="Filter..."/>
                     <select wicket:id="filterColumn" class="form-select">
                         <option value="all">All Columns</option>
+                        <option value="productionDate">Production Date</option>
                         <option value="productionPlant">Production Plant</option>
                         <option value="salesDocument">Sales Document</option>
                         <option value="customerName">Customer Name</option>
@@ -16,7 +16,7 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="input-group">
                     <label class="input-group-text">Rows per page:</label>
                     <select wicket:id="rowsPerPage" class="form-select">
@@ -27,7 +27,17 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <label class="input-group-text">Filter by Date:</label>
+                    <select wicket:id="filterDate" class="form-select">
+                        <option value="all">All Dates</option>
+                        <!-- Dates will be populated dynamically -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-3">
                 <button wicket:id="exportButton" class="btn btn-primary">
                     Export Selected
                 </button>
@@ -35,9 +45,8 @@
         </div>
 
         <div wicket:id="tableContainer" class="table-responsive table-container">
-            <table wicket:id="table" class="table table-striped table-bordered table-hover">
-                <!-- DataTable content will be generated automatically -->
-            </table>
+            <!-- Table markup is generated automatically by DefaultDataTable -->
+            <table wicket:id="table" class="table table-striped table-bordered table-hover"></table>
         </div>
     </form>
 </wicket:panel>

@@ -1,9 +1,12 @@
 package com.monbat.pages.readinessComponent;
 
 import com.monbat.models.dto.ReadinessDetail;
+import com.monbat.models.dto.ReadinessDetailWithDate;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.core.util.lang.PropertyResolver;
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.*;
@@ -13,7 +16,9 @@ import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.repeater.Item;
+import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
@@ -24,15 +29,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ReadinessTable extends Panel {
-    private final List<ReadinessDetail> allData;
-    private List<ReadinessDetail> filteredData;
-    private final Set<ReadinessDetail> selectedRows = new HashSet<>();
+    private final List<ReadinessDetailWithDate> allData;
+    private List<ReadinessDetailWithDate> filteredData;
+    private final Set<ReadinessDetailWithDate> selectedRows = new HashSet<>();
     private String filterText = "";
     private String filterColumn = "all";
-    private DataTable<ReadinessDetail, String> dataTable;
-    private IModel<Integer> rowsPerPage = Model.of(10);
+    private String filterDate = "all";
+    private final DataTable<ReadinessDetailWithDate, String> dataTable;
+    private final IModel<Integer> rowsPerPage = Model.of(10);
 
-    public ReadinessTable(String id, IModel<Collection<ReadinessDetail>> model) {
+    public ReadinessTable(String id, IModel<Collection<ReadinessDetailWithDate>> model) {
         super(id);
         setOutputMarkupId(true);
         this.allData = new ArrayList<>(model.getObject());
@@ -55,7 +61,6 @@ public class ReadinessTable extends Panel {
         tableContainer.add(dataTable);
         form.add(tableContainer);
 
-
         // Add export button
         addExportButton(form);
 
@@ -76,8 +81,8 @@ public class ReadinessTable extends Panel {
         form.add(filterField);
 
         // Dropdown for selecting filter column
-        List<String> columns = Arrays.asList("all", "productionPlant", "salesDocument", "customerName",
-                "batteryType", "material", "workCenter");
+        List<String> columns = Arrays.asList("all", "productionDate", "productionPlant", "salesDocument",
+                "customerName", "batteryType", "material", "workCenter");
         DropDownChoice<String> columnSelector = new DropDownChoice<>("filterColumn",
                 new PropertyModel<>(this, "filterColumn"), columns);
         columnSelector.add(new AjaxFormComponentUpdatingBehavior("change") {
@@ -88,6 +93,24 @@ public class ReadinessTable extends Panel {
             }
         });
         form.add(columnSelector);
+
+        // Dropdown for selecting filter date
+        List<String> dates = allData.stream()
+                .map(ReadinessDetailWithDate::getDate)
+                .distinct()
+                .map(Date::toString)
+                .collect(Collectors.toList());
+        dates.add(0, "all");
+        DropDownChoice<String> dateSelector = new DropDownChoice<>("filterDate",
+                new PropertyModel<>(this, "filterDate"), dates);
+        dateSelector.add(new AjaxFormComponentUpdatingBehavior("change") {
+            @Override
+            protected void onUpdate(AjaxRequestTarget target) {
+                filterData();
+                target.add(dataTable);
+            }
+        });
+        form.add(dateSelector);
     }
 
     private void addExportButton(Form<?> form) {
@@ -114,58 +137,178 @@ public class ReadinessTable extends Panel {
         form.add(rowsPerPageChoice);
     }
 
-    private DataTable<ReadinessDetail, String> createDataTable(String id) {
-        List<IColumn<ReadinessDetail, String>> columns = new ArrayList<>();
+    private DataTable<ReadinessDetailWithDate, String> createDataTable(String id) {
+        List<IColumn<ReadinessDetailWithDate, String>> columns = new ArrayList<>();
 
-        // Checkbox column for row selection
-        columns.add(new AbstractColumn<>(Model.of("")) {
+        // Checkbox column
+        columns.add(new AggregatingPropertyColumn<>(Model.of(""), "", true, true) {
             @Override
-            public void populateItem(Item<ICellPopulator<ReadinessDetail>> cellItem,
-                                     String componentId, IModel<ReadinessDetail> rowModel) {
+            public void populateItem(Item<ICellPopulator<ReadinessDetailWithDate>> cellItem, String componentId, IModel<ReadinessDetailWithDate> rowModel) {
                 cellItem.add(new CheckboxPanel(componentId, rowModel, selectedRows));
+            }
+
+            @Override
+            public void populateFooterCell(Item<ICellPopulator<ReadinessDetailWithDate>> item, String componentId, IDataProvider<ReadinessDetailWithDate> dataProvider) {
+                item.add(new Label(componentId, ""));
+            }
+
+            @Override
+            public Object getData(ReadinessDetailWithDate object) {
+                return "";
             }
         });
 
-        // Data columns
-        columns.add(createColumn("Production Plant", "productionPlant"));
-        columns.add(createColumn("Sales Document", "salesDocument"));
-        columns.add(createColumn("Sold To Party", "soldToParty"));
-        columns.add(createColumn("Customer Name", "customerName"));
-        columns.add(createColumn("Req Dlv Week", "reqDlvWeek"));
-        columns.add(createColumn("Battery Type", "batteryType"));
-        columns.add(createColumn("Material", "material"));
-        columns.add(createColumn("Order Quantity", "orderQuantity"));
-        columns.add(createColumn("Work Center", "workCenter"));
+        // Date column
+        columns.add(createColumn("Date", "date"));
+
+        // Data columns with aggregation
+        columns.add(createColumnWithCount("Production Plant", "detail.productionPlant"));
+        columns.add(createColumn("Sales Document", "detail.salesDocument"));
+        columns.add(createColumn("Sold To Party", "detail.soldToParty"));
+        columns.add(createColumn("Customer Name", "detail.customerName"));
+        columns.add(createColumn("Req Dlv Week", "detail.reqDlvWeek"));
+        columns.add(createColumn("Battery Type", "detail.batteryType"));
+        columns.add(createColumn("Material", "detail.material"));
+        columns.add(createColumnWithCountAndSum("Order Quantity", "detail.orderQuantity"));
+        columns.add(createColumnWithCount("Work Center", "detail.workCenter"));
 
         ReadinessDataProvider dataProvider = new ReadinessDataProvider();
 
-        return new DefaultDataTable<>(id, columns, dataProvider, rowsPerPage.getObject());
+        // Create the data table with footer
+        DataTable<ReadinessDetailWithDate, String> table = new DefaultDataTable<>(id, columns, dataProvider, rowsPerPage.getObject());
+        table.addBottomToolbar(new AggregateToolbar<>(table, dataProvider));
+
+        return table;
     }
 
-    private PropertyColumn<ReadinessDetail, String> createColumn(String header, String propertyExpression) {
-        return new PropertyColumn<>(Model.of(header), propertyExpression, propertyExpression) {
+    private PropertyColumn<ReadinessDetailWithDate, String> createColumn(String header, String propertyExpression) {
+        return new PropertyColumn<>(Model.of(header), propertyExpression, propertyExpression);
+    }
+
+    private AggregatingPropertyColumn<ReadinessDetailWithDate, String> createColumnWithCount(String header, String propertyExpression) {
+        return new AggregatingPropertyColumn<>(Model.of(header), propertyExpression, false, true) {
             @Override
-            public void populateItem(Item<ICellPopulator<ReadinessDetail>> item, String componentId, IModel<ReadinessDetail> rowModel) {
-                ReadinessDetail detail = rowModel.getObject();
-//                System.out.println(header + ": " + detail); // Debugging output
-                super.populateItem(item, componentId, rowModel);
+            public void populateFooterCell(Item<ICellPopulator<ReadinessDetailWithDate>> item, String componentId,
+                                           IDataProvider<ReadinessDetailWithDate> dataProvider) {
+                filterData();
+                long uniqueCount = filteredData.stream().map(d -> getObjectAsString(d, propertyExpression)).distinct().count();
+                item.add(new Label(componentId, "Count: " + uniqueCount));
+            }
+
+            @Override
+            public Object getData(ReadinessDetailWithDate object) {
+                return getObjectAsString(object, propertyExpression);
             }
         };
     }
 
+    private AggregatingPropertyColumn<ReadinessDetailWithDate, String> createColumnWithSum(String header, String propertyExpression) {
+        return new AggregatingPropertyColumn<>(Model.of(header), propertyExpression, true, false) {
+            @Override
+            public void populateFooterCell(Item<ICellPopulator<ReadinessDetailWithDate>> item, String componentId,
+                                           IDataProvider<ReadinessDetailWithDate> dataProvider) {
+                // Use the filtered data directly
+                filterData();
+                List<ReadinessDetailWithDate> data = filteredData;
+
+                double sum = data.stream()
+                        .mapToDouble(d -> {
+                            Object value = getObjectValue(d, propertyExpression);
+                            if (value instanceof Number) {
+                                return ((Number) value).doubleValue();
+                            }
+                            return 0.0;
+                        })
+                        .sum();
+
+                item.add(new Label(componentId, "Sum: " + sum));
+            }
+
+            @Override
+            public Object getData(ReadinessDetailWithDate object) {
+                return getObjectAsString(object, propertyExpression);
+            }
+        };
+    }
+
+    private AggregatingPropertyColumn<ReadinessDetailWithDate, String> createColumnWithCountAndSum(String header, String propertyExpression) {
+        return new AggregatingPropertyColumn<>(Model.of(header), propertyExpression, true, true) {
+            @Override
+            public void populateFooterCell(Item<ICellPopulator<ReadinessDetailWithDate>> item, String componentId,
+                                           IDataProvider<ReadinessDetailWithDate> dataProvider) {
+                // Use the filtered data directly
+                filterData();
+                List<ReadinessDetailWithDate> data = filteredData;
+
+                // Count unique values
+                long uniqueCount = data.stream()
+                        .map(d -> getObjectAsString(d, propertyExpression))
+                        .distinct()
+                        .count();
+
+                // Sum numeric values if applicable
+                double sum = 0.0;
+                boolean isNumeric = false;
+
+                for (ReadinessDetailWithDate d : data) {
+                    Object value = getObjectValue(d, propertyExpression);
+                    if (value instanceof Number) {
+                        isNumeric = true;
+                        sum += ((Number) value).doubleValue();
+                    }
+                }
+
+                String footerText = "Count: " + uniqueCount;
+                if (isNumeric) {
+                    footerText += ", Sum: " + sum;
+                }
+
+                item.add(new Label(componentId, footerText));
+            }
+
+            @Override
+            public Object getData(ReadinessDetailWithDate object) {
+                return getObjectAsString(object, propertyExpression);
+            }
+        };
+    }
+
+    private Object getObjectValue(ReadinessDetailWithDate data, String propertyExpression) {
+        try {
+            PropertyResolver.setValue(propertyExpression, data, null, null);
+            return PropertyResolver.getValue(propertyExpression, data);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getObjectAsString(ReadinessDetailWithDate data, String propertyExpression) {
+        try {
+            // Use reflection or a library like Apache Commons BeanUtils to resolve nested properties
+            return BeanUtils.getProperty(data, propertyExpression);
+        } catch (Exception e) {
+            return ""; // Return empty string if the property cannot be resolved
+        }
+    }
 
     private void filterData() {
         if (filterText == null || filterText.isEmpty()) {
             filteredData = new ArrayList<>(allData);
-            return;
+        } else {
+            filteredData = allData.stream()
+                    .filter(detail -> matchesFilter(detail, filterText.toLowerCase()))
+                    .collect(Collectors.toList());
         }
 
-        filteredData = allData.stream()
-                .filter(detail -> matchesFilter(detail, filterText.toLowerCase()))
-                .collect(Collectors.toList());
+        if (!"all".equals(filterDate)) {
+            filteredData = filteredData.stream()
+                    .filter(detail -> detail.getDate().toString().equals(filterDate))
+                    .collect(Collectors.toList());
+        }
     }
 
-    private boolean matchesFilter(ReadinessDetail detail, String filter) {
+    private boolean matchesFilter(ReadinessDetailWithDate detailWithDate, String filter) {
+        ReadinessDetail detail = detailWithDate.getDetail();
         if ("all".equals(filterColumn)) {
             return detail.getProductionPlant() == Integer.parseInt(filter) ||
                     detail.getSalesDocument() == Integer.parseInt(filter) ||
@@ -194,8 +337,10 @@ public class ReadinessTable extends Panel {
                 "Battery Type,Material,Order Quantity,Work Center\n");
 
         // Add data rows
-        for (ReadinessDetail detail : selectedRows.isEmpty() ? filteredData : selectedRows) {
-            csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+        for (ReadinessDetailWithDate detailWithDate : selectedRows.isEmpty() ? filteredData : selectedRows) {
+            ReadinessDetail detail = detailWithDate.getDetail();
+            csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    detailWithDate.getDate(),
                     detail.getProductionPlant(),
                     detail.getSalesDocument(),
                     detail.getSoldToParty(),
@@ -218,8 +363,8 @@ public class ReadinessTable extends Panel {
         );
     }
 
-    private class ReadinessDataProvider extends SortableDataProvider<ReadinessDetail, String> {
-        private String sortProperty = "productionPlant";
+    private class ReadinessDataProvider extends SortableDataProvider<ReadinessDetailWithDate, String> {
+        private String sortProperty = "detail.productionPlant";
         private SortOrder sortOrder = SortOrder.ASCENDING;
 
         public ReadinessDataProvider() {
@@ -227,14 +372,14 @@ public class ReadinessTable extends Panel {
         }
 
         @Override
-        public Iterator<? extends ReadinessDetail> iterator(long first, long count) {
-            List<ReadinessDetail> sorted = new ArrayList<>(filteredData);
+        public Iterator<? extends ReadinessDetailWithDate> iterator(long first, long count) {
+            List<ReadinessDetailWithDate> sorted = new ArrayList<>(filteredData);
             sorted.sort((o1, o2) -> {
                 int compare = compareByProperty(o1, o2, getSort().getProperty());
                 return getSort().isAscending() ? compare : -compare;
             });
 
-            return sorted.subList((int)first, (int)Math.min(first + count, sorted.size())).iterator();
+            return sorted.subList((int) first, (int) Math.min(first + count, sorted.size())).iterator();
         }
 
         @Override
@@ -243,15 +388,17 @@ public class ReadinessTable extends Panel {
         }
 
         @Override
-        public IModel<ReadinessDetail> model(ReadinessDetail object) {
+        public IModel<ReadinessDetailWithDate> model(ReadinessDetailWithDate object) {
             return Model.of(object);
         }
 
-        private int compareByProperty(ReadinessDetail o1, ReadinessDetail o2, String property) {
+        private int compareByProperty(ReadinessDetailWithDate o1, ReadinessDetailWithDate o2, String property) {
+            ReadinessDetail detail1 = o1.getDetail();
+            ReadinessDetail detail2 = o2.getDetail();
             return switch (property) {
-                case "productionPlant" -> o1.getProductionPlant().compareTo(o2.getProductionPlant());
-                case "salesDocument" -> o1.getSalesDocument().compareTo(o2.getSalesDocument());
-                case "customerName" -> o1.getCustomerName().compareTo(o2.getCustomerName());
+                case "detail.productionPlant" -> detail1.getProductionPlant().compareTo(detail2.getProductionPlant());
+                case "detail.salesDocument" -> detail1.getSalesDocument().compareTo(detail2.getSalesDocument());
+                case "detail.customerName" -> detail1.getCustomerName().compareTo(detail2.getCustomerName());
                 // Add other properties as needed
                 default -> 0;
             };

@@ -1,21 +1,22 @@
 package com.monbat.models.dto;
 
+import lombok.Getter;
+
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ReadinessByWeek {
-    private final Map<String, List<ReadinessByDate>> readinessByWeek = new HashMap<>();
+@Getter
+public class ReadinessByWeek implements Serializable {
+    private final Map<String, List<ReadinessDetailWithDate>> map = new HashMap<>();
 
-    public List<ReadinessByDate> get(String key) {
-        return readinessByWeek.get(key);
+    public List<ReadinessDetailWithDate> get(String key) {
+        return map.get(key);
     }
 
-    public void put(String key, List<ReadinessByDate> value) {
-        readinessByWeek.put(key, value);
+    public void put(String key, List<ReadinessDetailWithDate> value) {
+        map.put(key, value);
     }
 
-    public Map<String, List<ReadinessByDate>> getMap(){
-        return readinessByWeek;
-    }
 }

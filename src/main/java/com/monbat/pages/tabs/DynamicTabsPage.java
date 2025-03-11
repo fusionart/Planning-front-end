@@ -1,10 +1,10 @@
 package com.monbat.pages.tabs;
 
-import com.monbat.models.dto.ReadinessByDate;
 import com.monbat.models.dto.ReadinessByWeek;
-import com.monbat.models.dto.ReadinessDetail;
+import com.monbat.models.dto.ReadinessDetailWithDate;
 import com.monbat.models.entities.TabData;
 import com.monbat.pages.readinessComponent.ReadinessTable;
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
@@ -22,38 +22,38 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class DynamicTabsPage extends Panel {
     private final WebMarkupContainer contentContainer;
     private final ListView<TabData> tabHeaders;
     private final Label loadingLabel;
     private final WebMarkupContainer tabsContainer;
-
+    private String activeTabId; // Track the currently active tab ID
     private final transient RestTemplate restTemplate;
 
     public DynamicTabsPage(String id) {
         super(id);
         restTemplate = new RestTemplate();
-        // Add a loading label
+
         loadingLabel = new Label("loadingLabel", Model.of("Loading data..."));
         loadingLabel.setOutputMarkupId(true);
         add(loadingLabel);
 
-        // Initialize the content container (empty for now)
         contentContainer = new WebMarkupContainer("contentContainer");
-        contentContainer.setOutputMarkupId(true); // Required for Ajax updates
-        contentContainer.setOutputMarkupPlaceholderTag(true); // Keeps an invisible placeholder in the HTML
-        contentContainer.setVisible(false); // Now it's safe to hide it initially
+        contentContainer.setOutputMarkupId(true);
+        contentContainer.setOutputMarkupPlaceholderTag(true);
+        contentContainer.setVisible(false);
         add(contentContainer);
         contentContainer.add(new Label("content", Model.of("")));
 
-        // Initialize a container for the tabs
         tabsContainer = new WebMarkupContainer("tabsContainer");
-        tabsContainer.setOutputMarkupId(true); // Required for Ajax updates
+        tabsContainer.setOutputMarkupId(true);
         add(tabsContainer);
 
-        // Initialize the tab headers (empty for now)
         tabHeaders = new ListView<>("tabHeaders", new ArrayList<>()) {
             @Override
             protected void populateItem(ListItem<TabData> item) {
@@ -62,24 +62,41 @@ public class DynamicTabsPage extends Panel {
                     throw new IllegalArgumentException("TabData object must not be null.");
                 }
 
-                // Create an AjaxLink for each tab header
+                String tabId = "tab_" + item.getIndex();
                 AjaxLink<Void> tabLink = new AjaxLink<>("tabLink") {
                     @Override
                     public void onClick(AjaxRequestTarget target) {
+                        activeTabId = tabId;
+                        updateTabStates(target);
+
                         ReadinessTable newTable = new ReadinessTable("content", Model.of(tabData.getContent()));
                         contentContainer.replace(newTable);
                         target.add(contentContainer);
                     }
+
+                    @Override
+                    protected void onConfigure() {
+                        super.onConfigure();
+                        String cssClass = tabId.equals(activeTabId) ? "tab-link active" : "tab-link";
+                        add(AttributeModifier.replace("class", cssClass));
+                    }
                 };
+
+                tabLink.setOutputMarkupId(true);
                 tabLink.add(new Label("tabTitle", tabData.getTitle()));
                 item.add(tabLink);
+
+                // Set the first tab as active by default
+                if (item.getIndex() == 0 && activeTabId == null) {
+                    activeTabId = tabId;
+                }
             }
         };
+
         tabHeaders.setOutputMarkupId(true);
         tabHeaders.setModel(new ListModel<>(new ArrayList<>()));
-        tabsContainer.add(tabHeaders); // Add the ListView to the parent container
+        tabsContainer.add(tabHeaders);
 
-        // Add an AJAX timer to fetch data and create tabs dynamically
         add(new AbstractAjaxTimerBehavior(Duration.ofSeconds(1)) {
             @Override
             protected void onTimer(AjaxRequestTarget target) {
@@ -106,21 +123,24 @@ public class DynamicTabsPage extends Panel {
         });
     }
 
+    private void updateTabStates(AjaxRequestTarget target) {
+        target.add(tabsContainer);
+    }
+
     private List<TabData> createTabDataList(List<ReadinessByWeek> readinessData) {
         List<TabData> tabDataList = new ArrayList<>();
 
         for (ReadinessByWeek item : readinessData) {
-            for (Map.Entry<String, List<ReadinessByDate>> readinessByDateEntry : item.getMap().entrySet()) {
-                List<ReadinessDetail> tableData = new ArrayList<>();
-                for (ReadinessByDate readinessByDate : readinessByDateEntry.getValue()) {
-
-                    for (Map.Entry<Date, List<ReadinessDetail>> readinessDetail : readinessByDate.getMap().entrySet()) {
-                        tableData.addAll(readinessDetail.getValue());
-
-                    }
-                }
+            for (Map.Entry<String, List<ReadinessDetailWithDate>> readinessByDateEntry : item.getMap().entrySet()) {
+//                List<ReadinessDetail> tableData = new ArrayList<>();
+//                for (ReadinessByDate readinessByDate : readinessByDateEntry.getValue()) {
+//
+//                    for (Map.Entry<Date, List<ReadinessDetail>> readinessDetail : readinessByDate.getMap().entrySet()) {
+//                        tableData.addAll(readinessDetail.getValue());
+//                    }
+//                }
                 tabDataList.add(new TabData("Week " + readinessByDateEntry.getKey(),
-                        tableData));
+                        readinessByDateEntry.getValue()));
             }
         }
         return tabDataList;
@@ -134,8 +154,7 @@ public class DynamicTabsPage extends Panel {
                     apiUrl,
                     HttpMethod.GET,
                     null,
-                    new ParameterizedTypeReference<>() {
-                    }
+                    new ParameterizedTypeReference<>() {}
             );
 
             return response.getBody() != null ? response.getBody() : Collections.emptyList();
@@ -145,5 +164,4 @@ public class DynamicTabsPage extends Panel {
             return Collections.emptyList();
         }
     }
-
 }
