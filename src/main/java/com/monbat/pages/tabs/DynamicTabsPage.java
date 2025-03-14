@@ -4,6 +4,7 @@ import com.monbat.models.dto.ReadinessByWeek;
 import com.monbat.models.dto.ReadinessDetailWithDate;
 import com.monbat.models.entities.TabData;
 import com.monbat.pages.readinessComponent.ReadinessTable;
+import com.monbat.services.LoadReadinessByWeek;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -100,7 +101,7 @@ public class DynamicTabsPage extends Panel {
         add(new AbstractAjaxTimerBehavior(Duration.ofSeconds(1)) {
             @Override
             protected void onTimer(AjaxRequestTarget target) {
-                List<ReadinessByWeek> readinessData = getReadinessByWeek();
+                List<ReadinessByWeek> readinessData = LoadReadinessByWeek.getReadinessByWeek();
 
                 if (readinessData != null) {
                     loadingLabel.setDefaultModel(Model.of(""));
@@ -144,24 +145,5 @@ public class DynamicTabsPage extends Panel {
             }
         }
         return tabDataList;
-    }
-
-    private List<ReadinessByWeek> getReadinessByWeek() {
-        String apiUrl = "http://localhost:8080/api/calculations/plan10s";
-
-        try {
-            ResponseEntity<List<ReadinessByWeek>> response = restTemplate.exchange(
-                    apiUrl,
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<>() {}
-            );
-
-            return response.getBody() != null ? response.getBody() : Collections.emptyList();
-        } catch (Exception e) {
-            // Log the error and return an empty list
-            LoggerFactory.getLogger(getClass()).error("Error fetching readiness data", e);
-            return Collections.emptyList();
-        }
     }
 }

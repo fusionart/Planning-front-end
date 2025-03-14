@@ -2,7 +2,9 @@ package com.monbat.components.menubar;
 
 import com.monbat.components.center_area.CenterArea;
 import com.monbat.pages.importfiles.ImportFiles;
+import com.monbat.pages.machinespage.MachineDataPage;
 import com.monbat.pages.tabs.DynamicTabsPage;
+import com.monbat.pages.timeline.TimeLine;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -39,6 +41,24 @@ public class MenuBar extends Panel {
 			public void onClick(AjaxRequestTarget target) {
 				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
 				centerArea.replace(new DynamicTabsPage(CONTENT));
+				target.add(centerArea);
+			}
+		});
+
+		add(new AjaxLink<Void>("machineTable") {
+			@Override
+			public void onClick(AjaxRequestTarget target) {
+				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
+				centerArea.replace(new MachineDataPage(CONTENT));
+				target.add(centerArea);
+			}
+		});
+
+		add(new AjaxLink<Void>("timeLine") {
+			@Override
+			public void onClick(AjaxRequestTarget target) {
+				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
+				centerArea.replace(new TimeLine(CONTENT));
 				target.add(centerArea);
 			}
 		});

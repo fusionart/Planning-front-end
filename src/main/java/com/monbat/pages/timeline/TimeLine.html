@@ -1,0 +1,33 @@
+<wicket:panel xmlns:wicket="http://www.w3.org/1999/xhtml">
+    <div wicket:id="scrollableContainer">
+        <table wicket:id="table">
+            <thead>
+            <!-- Bulgarian month headers -->
+            <tr wicket:id="monthRow">
+                <th wicket:id="cornerCell"></th>
+                <th wicket:id="months">
+                    <span wicket:id="monthLabel"></span>
+                </th>
+            </tr>
+            <!-- Week headers -->
+            <tr wicket:id="weekRow">
+                <th wicket:id="weekRowLabel"></th>
+                <th wicket:id="weeks">
+                    <span wicket:id="weekLabel"></span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Data rows -->
+            <tr wicket:id="dataRows">
+                <td wicket:id="rowLabel"></td>
+                <td wicket:id="cells">
+                    <div wicket:id="cell">
+                        <span wicket:id="cellText"></span>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</wicket:panel>
