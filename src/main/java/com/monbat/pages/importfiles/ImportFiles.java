@@ -56,6 +56,7 @@ public class ImportFiles extends Panel {
         addUploadButton(form, "submitReadiness", TypeConstants.READINESS);
         addUploadButton(form, "submitRouting", TypeConstants.ROUTING);
         addUploadButton(form, "submitWorkCenterCapacity", TypeConstants.WORK_CENTER_CAPACITY);
+        addUploadButton(form, "submitQuantities", TypeConstants.QUANTITIES);
     }
 
     private String sendFileToSpringBootApi(File file, String type) {

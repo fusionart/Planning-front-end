@@ -2,9 +2,12 @@ package com.monbat.pages.tabs;
 
 import com.monbat.models.dto.ReadinessByWeek;
 import com.monbat.models.dto.ReadinessDetailWithDate;
+import com.monbat.models.entities.BatteryQuantity;
 import com.monbat.models.entities.TabData;
 import com.monbat.pages.readinessComponent.ReadinessTable;
+import com.monbat.services.LoadBatteryQuantity;
 import com.monbat.services.LoadReadinessByWeek;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -16,15 +19,10 @@ import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.util.ListModel;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +33,9 @@ public class DynamicTabsPage extends Panel {
     private final WebMarkupContainer tabsContainer;
     private String activeTabId; // Track the currently active tab ID
     private final transient RestTemplate restTemplate;
+
+    private List<BatteryQuantity> batteryQuantityListLocation2000 = new ArrayList<>();
+    private List<BatteryQuantity> batteryQuantityListByPrefix = new ArrayList<>();
 
     public DynamicTabsPage(String id) {
         super(id);
@@ -110,6 +111,7 @@ public class DynamicTabsPage extends Panel {
                     List<TabData> tabDataList = createTabDataList(readinessData);
                     tabHeaders.setModelObject(tabDataList);
 
+
                     if (!tabDataList.isEmpty()) {
                         ReadinessTable newTable = new ReadinessTable("content",
                                 Model.of(tabDataList.get(0).getContent()));
@@ -130,6 +132,8 @@ public class DynamicTabsPage extends Panel {
 
     private List<TabData> createTabDataList(List<ReadinessByWeek> readinessData) {
         List<TabData> tabDataList = new ArrayList<>();
+        batteryQuantityListLocation2000 = LoadBatteryQuantity.getBatteryQuantity(2000);
+        batteryQuantityListByPrefix = LoadBatteryQuantity.getBatteryQuantityByPrefix(20);
 
         for (ReadinessByWeek item : readinessData) {
             for (Map.Entry<String, List<ReadinessDetailWithDate>> readinessByDateEntry : item.getMap().entrySet()) {
@@ -140,10 +144,32 @@ public class DynamicTabsPage extends Panel {
 //                        tableData.addAll(readinessDetail.getValue());
 //                    }
 //                }
+                for (ReadinessDetailWithDate rItem : readinessByDateEntry.getValue()){
+                    rItem.setAvailableQuantity11(getAvailableQuantityFor11(rItem.getDetail().getMaterial()));
+                    rItem.setAvailableQuantity20(getAvailableQuantityFor20(rItem.getDetail().getMaterial()));
+                }
+
                 tabDataList.add(new TabData("Week " + readinessByDateEntry.getKey(),
                         readinessByDateEntry.getValue()));
             }
         }
         return tabDataList;
+    }
+
+    private Integer getAvailableQuantityFor20(String material) {
+        String newMaterial = "20" + StringUtils.right(material, material.length() - 2);
+        String finalNewMaterial = StringUtils.left(newMaterial, newMaterial.length() - 1) + "2";
+        return batteryQuantityListByPrefix.stream()
+                .filter(entity -> finalNewMaterial.equals(entity.getBatteryCode())) // Filter by batteryCode
+                .mapToInt(BatteryQuantity::getQuantity)
+                .sum();
+    }
+
+    private Integer getAvailableQuantityFor11(String material) {
+        String newMaterial = "11" + StringUtils.right(material, material.length() - 2);
+        return batteryQuantityListLocation2000.stream()
+                .filter(entity -> newMaterial.equals(entity.getBatteryCode())) // Filter by batteryCode
+                .mapToInt(BatteryQuantity::getQuantity)
+                .sum();
     }
 }

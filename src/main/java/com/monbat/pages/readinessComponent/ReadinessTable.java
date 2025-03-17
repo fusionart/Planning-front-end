@@ -9,21 +9,22 @@ import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.core.util.lang.PropertyResolver;
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
-import org.apache.wicket.extensions.markup.html.repeater.data.table.*;
+import org.apache.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import org.apache.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
+import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
+import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColumn;
 import org.apache.wicket.extensions.markup.html.repeater.util.SortableDataProvider;
 import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.panel.Panel;
-import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
-import org.apache.wicket.request.handler.resource.ResourceRequestHandler;
-import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -171,6 +172,8 @@ public class ReadinessTable extends Panel {
         columns.add(createColumn("Material", "detail.material"));
         columns.add(createColumnWithCountAndSum("Order Quantity", "detail.orderQuantity"));
         columns.add(createColumnWithCount("Work Center", "detail.workCenter"));
+        columns.add(createColumn("Available Quantity 11", "availableQuantity11"));
+        columns.add(createColumn("Available Quantity 20", "availableQuantity20"));
 
         ReadinessDataProvider dataProvider = new ReadinessDataProvider();
 
@@ -324,43 +327,46 @@ public class ReadinessTable extends Panel {
             case "salesDocument" -> detail.getSalesDocument() == Integer.parseInt(filter);
             case "customerName" -> detail.getCustomerName().toLowerCase().contains(filter);
             case "batteryType" -> detail.getBatteryType().toLowerCase().contains(filter);
-            case "material" -> detail.getMaterial().toLowerCase().contains(filter);
+            case "material" -> detail.getMaterial().contains(filter);
             case "workCenter" -> detail.getWorkCenter().toLowerCase().contains(filter);
             default -> false;
         };
     }
 
     private void exportToCSV() {
-        StringBuilder csv = new StringBuilder();
-        // Add headers
-        csv.append("Production Plant,Sales Document,Sold To Party,Customer Name,Req Dlv Week," +
-                "Battery Type,Material,Order Quantity,Work Center\n");
-
-        // Add data rows
-        for (ReadinessDetailWithDate detailWithDate : selectedRows.isEmpty() ? filteredData : selectedRows) {
-            ReadinessDetail detail = detailWithDate.getDetail();
-            csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-                    detailWithDate.getDate(),
-                    detail.getProductionPlant(),
-                    detail.getSalesDocument(),
-                    detail.getSoldToParty(),
-                    detail.getCustomerName(),
-                    detail.getReqDlvWeek(),
-                    detail.getBatteryType(),
-                    detail.getMaterial(),
-                    detail.getOrderQuantity(),
-                    detail.getWorkCenter()));
-        }
-
-        // Create resource for download
-        CSVResourceDownload resource = new CSVResourceDownload(
-                csv.toString().getBytes(),
-                "export.csv"
-        );
-
-        getRequestCycle().scheduleRequestHandlerAfterCurrent(
-                new ResourceRequestHandler(resource, new PageParameters())
-        );
+//        StringBuilder csv = new StringBuilder();
+//        // Add headers
+//        csv.append("Production Plant,Sales Document,Sold To Party,Customer Name,Req Dlv Week," +
+//                "Battery Type,Material,Order Quantity,Work Center\n");
+//
+//        // Add data rows
+//        for (ReadinessDetailWithDate detailWithDate : selectedRows.isEmpty() ? filteredData : selectedRows) {
+//            ReadinessDetail detail = detailWithDate.getDetail();
+//            csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+//                    detailWithDate.getDate(),
+//                    detail.getProductionPlant(),
+//                    detail.getSalesDocument(),
+//                    detail.getSoldToParty(),
+//                    detail.getCustomerName(),
+//                    detail.getReqDlvWeek(),
+//                    detail.getBatteryType(),
+//                    detail.getMaterial(),
+//                    detail.getOrderQuantity(),
+//                    detail.getWorkCenter(),
+//                    detailWithDate.getAvailableQuantity11(),
+//                    detailWithDate.getAvailableQuantity20()
+//            ));
+//        }
+//
+//        // Create resource for download
+//        CSVResourceDownload resource = new CSVResourceDownload(
+//                csv.toString().getBytes(),
+//                "export.csv"
+//        );
+//
+//        getRequestCycle().scheduleRequestHandlerAfterCurrent(
+//                new ResourceRequestHandler(resource, new PageParameters())
+//        );
     }
 
     private class ReadinessDataProvider extends SortableDataProvider<ReadinessDetailWithDate, String> {
@@ -396,9 +402,11 @@ public class ReadinessTable extends Panel {
             ReadinessDetail detail1 = o1.getDetail();
             ReadinessDetail detail2 = o2.getDetail();
             return switch (property) {
-                case "detail.productionPlant" -> detail1.getProductionPlant().compareTo(detail2.getProductionPlant());
                 case "detail.salesDocument" -> detail1.getSalesDocument().compareTo(detail2.getSalesDocument());
                 case "detail.customerName" -> detail1.getCustomerName().compareTo(detail2.getCustomerName());
+                case "detail.material" -> detail1.getMaterial().compareTo(detail2.getMaterial());
+                case "detail.orderQuantity" -> detail1.getOrderQuantity().compareTo(detail2.getOrderQuantity());
+                case "detail.workCenter" -> detail1.getWorkCenter().compareTo(detail2.getWorkCenter());
                 // Add other properties as needed
                 default -> 0;
             };

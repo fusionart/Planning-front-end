@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -14,8 +13,8 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class  ReadinessDetailWithDate implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
     private Date date;
     private ReadinessDetail detail;
+    private Integer availableQuantity11;
+    private Integer availableQuantity20;
 }

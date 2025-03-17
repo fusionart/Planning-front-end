@@ -7,4 +7,5 @@ public class TypeConstants {
     public final static String READINESS = "Readiness";
     public final static String ROUTING = "Routing";
     public final static String WORK_CENTER_CAPACITY = "Work center capacity";
+    public final static String QUANTITIES = "Quantities";
 }
