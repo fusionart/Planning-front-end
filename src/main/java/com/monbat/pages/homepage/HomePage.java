@@ -6,11 +6,12 @@ import com.monbat.pages.tabs.TabContentPanel;
 import org.apache.wicket.model.Model;
 
 import java.io.Serial;
+import java.io.Serializable;
 
 import static com.monbat.components.ComponentIds.CENTER_AREA;
 import static com.monbat.components.ComponentIds.CONTENT;
 
-public class HomePage extends BasePage {
+public class HomePage extends BasePage implements Serializable {
 	@Serial
 	private static final long serialVersionUID = 1L;
 

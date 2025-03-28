@@ -1,0 +1,38 @@
+<html xmlns:wicket="http://wicket.apache.org">
+<wicket:panel>
+    <div class="child-panel" style="position: relative; height: 300px; overflow-x: auto; background-color: #f8f9fa;">
+        <div wicket:id="rectanglesContainer" class="rectangles-container"
+             style="position: relative; min-width: 2000px; height: 100%; border: 1px dashed #ccc;">
+
+            <!-- Grid Container -->
+            <div wicket:id="gridContainer" class="grid-container">
+                <!-- Hours Header -->
+                <div class="grid-hours-header">
+                    <div wicket:id="hoursList" class="grid-hour-cell">
+                        <span wicket:id="hourLabel" class="hour-label"></span>
+                    </div>
+                </div>
+
+                <!-- Grid Rows -->
+                <div class="grid-rows-container">
+                    <div wicket:id="rowsList" class="grid-row">
+                        <div class="grid-row-hours">
+                            <!-- Hours cells for each row -->
+                            <div wicket:id="hoursList" class="grid-hour-cell">
+                                <div wicket:id="hourCell"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rectangles List -->
+            <div wicket:id="rectangleList">
+                <div wicket:id="rectangleItem" class="timeline-rectangle">
+                    <span wicket:id="rectangleTitle"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</wicket:panel>
+</html>

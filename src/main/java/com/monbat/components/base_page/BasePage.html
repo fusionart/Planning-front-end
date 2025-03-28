@@ -5,7 +5,34 @@
     <title>Monbat</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
     <link rel="stylesheet" type="text/css" href="css/tabs.css">
-    <link rel="stylesheet" type="text/css" href="css/timeline.css">
+    <link rel="stylesheet" type="text/css" href="css/timelinenew.css">
+    <script src="js/ScrollSyncro.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const panels = document.querySelectorAll('.child-panel');
+            console.log('Found child panels:', panels.length);
+
+            panels.forEach(panel => {
+                const rects = panel.querySelectorAll('.timeline-rectangle');
+                console.log('Rectangles in panel:', rects.length);
+
+                rects.forEach(rect => {
+                    console.log('Rectangle:', {
+                        text: rect.innerText,
+                        style: rect.getAttribute('style'),
+                        computed: window.getComputedStyle(rect),
+                        visible: rect.offsetWidth > 0 && rect.offsetHeight > 0,
+                        position: rect.getBoundingClientRect()
+                    });
+
+                    // Force visibility for debugging
+                    rect.style.setProperty('display', 'flex', 'important');
+                    rect.style.setProperty('opacity', '1', 'important');
+                    rect.style.setProperty('visibility', 'visible', 'important');
+                });
+            });
+        });
+    </script>
 </head>
 <body>
 <!-- Header -->

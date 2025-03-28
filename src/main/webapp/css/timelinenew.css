@@ -1,0 +1,262 @@
+/* CSS Variables for consistent theming */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --background-color: #f4f6f7;
+    --text-color: #2c3e50;
+    --border-color: #ddd;
+    --hover-color: rgba(52, 152, 219, 0.1);
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-medium: rgba(0, 0, 0, 0.2);
+}
+
+/* Reset and Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Scrollbar Styling */
+.horizontal-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) #e0e0e0;
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.horizontal-scroll::-webkit-scrollbar-track {
+    background: #e0e0e0;
+}
+
+.horizontal-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 4px;
+}
+
+/* Timeline Container Styles */
+.main-timeline-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px var(--shadow-light);
+    overflow: hidden;
+    display: flex;
+}
+
+.child-panel {
+    position: relative;
+    height: 300px;
+    overflow-x: auto;
+    background-color: #f8f9fa;
+    border: 2px dashed green;
+}
+
+.child-panel:hover {
+    box-shadow: 0 4px 8px var(--shadow-light);
+    transform: translateY(-5px);
+}
+
+/* Rectangles Container */
+.rectangles-container {
+    position: relative;
+    min-width: 2000px;
+    height: 100%;
+    border: 1px dashed #ccc;
+    background-color: rgba(200, 200, 255, 0.1);
+}
+
+/* Grid Container Styles */
+.grid-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.grid-hours-header {
+    display: flex;
+/*    position: sticky;*/
+/*    top: 0;*/
+/*    background-color: var(--background-color);*/
+/*    z-index: 10;*/
+/*    border-bottom: 1px solid var(--border-color);*/
+}
+
+.grid-hour-cell {
+    min-width: 50px;
+    width: 50px;
+    border-right: 1px solid var(--border-color);
+    text-align: center;
+    padding: 5px;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+.hour-label {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.grid-rows-container {
+    position: relative;
+}
+
+.grid-row {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    height: 60px;
+}
+
+.row-label {
+    width: 100px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.grid-row-hours {
+    display: flex;
+    flex-grow: 1;
+}
+
+.grid-row-hours .grid-hour-cell {
+    border-right: 1px solid var(--border-color);
+}
+
+/* Timeline Rectangle Styles */
+.timeline-rectangle {
+    position: absolute !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    padding: 5px !important;
+    box-sizing: border-box !important;
+    border-radius: 5px !important;
+    box-shadow: 0 2px 4px var(--shadow-medium) !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    cursor: pointer !important;
+}
+
+.timeline-rectangle:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    z-index: 20;
+}
+
+/* Timeline Header Styles */
+.timeline-header-container {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    background-color: var(--background-color);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.merged-cell {
+    text-align: center;
+    margin: 0 5px;
+    border-radius: 6px;
+    background-color: #e0e0e0;
+    transition: background-color 0.3s ease;
+}
+
+.cell-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.days-hours-container {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.day-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+    align-items: center;
+    border-right: 1px solid var(--border-color);
+}
+
+.day-item:last-child {
+    border-right: none;
+}
+
+.day-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    text-align: center;
+}
+
+.day-number {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-right: 5px;
+}
+
+.weekday-name {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.hours-container {
+    display: flex;
+    width: 100%;
+    border-top: 1px solid var(--border-color);
+}
+
+.hour-item {
+    flex: 1;
+    text-align: center;
+    padding: 5px;
+    border-right: 1px solid var(--border-color);
+}
+
+.hour-item:last-child {
+    border-right: none;
+}
+
+/* State and Interaction Styles */
+.today-day {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.today-cell {
+    border: 2px solid var(--primary-color);
+}
+
+.date-item:hover {
+    background-color: var(--hover-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-timeline-container {
+        flex-direction: column;
+    }
+
+    .child-panel {
+        margin: 5px 0;
+    }
+}
