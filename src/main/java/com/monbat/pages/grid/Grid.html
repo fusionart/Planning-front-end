@@ -1,0 +1,58 @@
+<html xmlns:wicket="http://wicket.apache.org" lang="en">
+<wicket:panel>
+    <div class="excel-container" wicket:id="excelContainer">
+        <!-- Filter form -->
+        <form wicket:id="filterForm" class="filter-form">
+            <label>
+                <input type="text" wicket:id="filterInput" placeholder="Filter rows...">
+            </label>
+            <button type="submit" wicket:id="filterButton">Filter</button>
+        </form>
+
+        <!-- Fixed top-left corner -->
+        <div class="top-left-corner"></div>
+
+        <!-- Top header with horizontal codes -->
+        <div class="top-header">
+            <div class="top-header-inner" wicket:id="topHeaderContainer">
+                <div class="header-item" wicket:id="headerItems">
+                    <span wicket:id="headerText">Code A</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left column with vertical codes -->
+        <div class="left-column">
+            <div class="left-column-inner" wicket:id="leftColumnContainer">
+                <div class="row-item" wicket:id="rowItems">
+                    <span wicket:id="rowText">Code 1</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scrollable content area -->
+        <div class="content-area" wicket:id="contentArea">
+            <div class="content-inner" wicket:id="contentContainer">
+                <div class="cell-row" wicket:id="cellRows">
+                    <div class="cell" wicket:id="cells">
+                        <span wicket:id="cellValue">Value</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const contentArea = document.querySelector('.content-area');
+            const topHeader = document.querySelector('.top-header');
+            const leftColumn = document.querySelector('.left-column');
+
+            contentArea.addEventListener('scroll', function() {
+                topHeader.scrollLeft = contentArea.scrollLeft;
+                leftColumn.scrollTop = contentArea.scrollTop;
+            });
+        });
+    </script>
+</wicket:panel>
+</html>

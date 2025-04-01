@@ -1,6 +1,7 @@
 package com.monbat.components.menubar;
 
 import com.monbat.components.center_area.CenterArea;
+import com.monbat.pages.grid.Grid;
 import com.monbat.pages.importfiles.ImportFiles;
 import com.monbat.pages.machinespage.MachineDataPage;
 import com.monbat.pages.newTimeline.TimelinePage;
@@ -59,11 +60,20 @@ public class MenuBar extends Panel {
 			}
 		});
 
-		add(new AjaxLink<Void>("timeLine1") {
+		add(new AjaxLink<Void>("newTimeLine") {
 			@Override
 			public void onClick(AjaxRequestTarget target) {
 				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
 				centerArea.replace(new TimelinePage(CONTENT));
+				target.add(centerArea);
+			}
+		});
+
+		add(new AjaxLink<Void>("grid") {
+			@Override
+			public void onClick(AjaxRequestTarget target) {
+				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
+				centerArea.replace(new Grid(CONTENT));
 				target.add(centerArea);
 			}
 		});

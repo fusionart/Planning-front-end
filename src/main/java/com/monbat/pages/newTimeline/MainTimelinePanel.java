@@ -8,13 +8,11 @@ public class MainTimelinePanel extends Panel {
     public MainTimelinePanel(String id) {
         super(id);
 
-        // Create a container with horizontal scrolling
         WebMarkupContainer mainContainer = new WebMarkupContainer("mainContainer");
-        mainContainer.add(AttributeModifier.replace("class",
-                "main-timeline-container horizontal-scroll"));
+        mainContainer.add(AttributeModifier.replace("class", "main-timeline-container"));
         add(mainContainer);
 
-        // Add three child panels horizontally
+        // Add three child panels
         mainContainer.add(new ChildPanel("childPanel1"));
         mainContainer.add(new ChildPanel("childPanel2"));
         mainContainer.add(new ChildPanel("childPanel3"));
