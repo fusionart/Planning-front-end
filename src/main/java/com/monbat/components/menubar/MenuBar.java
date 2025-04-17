@@ -6,6 +6,7 @@ import com.monbat.pages.importfiles.ImportFiles;
 import com.monbat.pages.machinespage.MachineDataPage;
 import com.monbat.pages.newTimeline.TimelinePage;
 import com.monbat.pages.productionOrders.ProductionOrderPanel;
+import com.monbat.pages.salesOrders.SalesOrderDynamicTabsPage;
 import com.monbat.pages.tabs.DynamicTabsPage;
 import com.monbat.pages.timeline.TimeLine;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -78,11 +79,20 @@ public class MenuBar extends Panel {
 			}
 		});
 
-		add(new AjaxLink<Void>("loadDataFromSAP") {
+		add(new AjaxLink<Void>("loadProductionOrdersFromSAP") {
 			@Override
 			public void onClick(AjaxRequestTarget target) {
 				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
 				centerArea.replace(new ProductionOrderPanel(CONTENT));
+				target.add(centerArea);
+			}
+		});
+
+		add(new AjaxLink<Void>("loadSalesOrdersFromSAP") {
+			@Override
+			public void onClick(AjaxRequestTarget target) {
+				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
+				centerArea.replace(new SalesOrderDynamicTabsPage(CONTENT));
 				target.add(centerArea);
 			}
 		});

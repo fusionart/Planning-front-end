@@ -1,6 +1,5 @@
 package com.monbat.models.entities;
 
-import com.monbat.models.dto.ReadinessDetailWithDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
-public class TabData implements Serializable {
+public class TabData<T> implements Serializable {
     private String title;
-    private List<ReadinessDetailWithDate> content;
+    private List<T> content;
 }

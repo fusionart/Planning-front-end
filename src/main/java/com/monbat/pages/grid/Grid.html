@@ -16,12 +16,17 @@
         <div class="top-header">
             <div class="top-header-inner" wicket:id="topHeaderContainer">
                 <div class="header-item" wicket:id="headerItems">
-                    <span wicket:id="headerText">Code A</span>
+                    <div class="week-header" wicket:id="weekHeader"></div>
+                    <div class="zero-values-checkbox">
+                        <label>
+                            Show empty
+                            <input type="checkbox" wicket:id="showZeroValues" checked>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Left column with vertical codes -->
         <div class="left-column">
             <div class="left-column-inner" wicket:id="leftColumnContainer">
                 <div class="row-item" wicket:id="rowItems">
@@ -35,24 +40,13 @@
             <div class="content-inner" wicket:id="contentContainer">
                 <div class="cell-row" wicket:id="cellRows">
                     <div class="cell" wicket:id="cells">
-                        <span wicket:id="cellValue">Value</span>
+                        <div class="cell-container" wicket:id="cellContainer">
+                            <span wicket:id="cellValue">Value</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const contentArea = document.querySelector('.content-area');
-            const topHeader = document.querySelector('.top-header');
-            const leftColumn = document.querySelector('.left-column');
-
-            contentArea.addEventListener('scroll', function() {
-                topHeader.scrollLeft = contentArea.scrollLeft;
-                leftColumn.scrollTop = contentArea.scrollTop;
-            });
-        });
-    </script>
 </wicket:panel>
 </html>
