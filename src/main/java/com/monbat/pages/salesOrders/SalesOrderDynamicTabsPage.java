@@ -1,27 +1,31 @@
 package com.monbat.pages.salesOrders;
 
+import com.googlecode.wicket.jquery.core.Options;
+import com.googlecode.wicket.jquery.ui.panel.JQueryFeedbackPanel;
+import com.googlecode.wicket.jquery.ui.widget.tabs.TabListModel;
+import com.googlecode.wicket.jquery.ui.widget.tabs.TabbedPanel;
 import com.monbat.models.dto.sap.SalesOrderDto;
 import com.monbat.models.dto.sap.SalesOrderItemRow;
 import com.monbat.models.dto.sap.ToItem;
 import com.monbat.models.entities.TabData;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.list.ListItem;
-import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.Model;
-import org.apache.wicket.model.util.ListModel;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,116 +36,171 @@ import java.util.stream.Collectors;
 import static com.monbat.utils.Constants.MAIN_ADDRESS;
 
 public class SalesOrderDynamicTabsPage extends Panel {
-    private final WebMarkupContainer contentContainer;
-    private final ListView<TabData> tabHeaders;
+    private static final long serialVersionUID = 1L;
+    private static final Logger LOG = LoggerFactory.getLogger(SalesOrderDynamicTabsPage.class);
+
+    private final WebMarkupContainer loadingContainer;
     private final Label loadingLabel;
-    private final WebMarkupContainer tabsContainer;
-    private String activeTabId;
+    private TabbedPanel tabbedPanel;
+    private FeedbackPanel feedback;
     private final transient RestTemplate restTemplate;
 
     public SalesOrderDynamicTabsPage(String id) {
         super(id);
         restTemplate = new RestTemplate();
 
-        loadingLabel = new Label("loadingLabel", Model.of("Loading data..."));
+        // Loading container and label
+        loadingContainer = new WebMarkupContainer("loadingContainer");
+        loadingContainer.setOutputMarkupId(true);
+        add(loadingContainer);
+
+        loadingLabel = new Label("loadingLabel", Model.of("Loading sales order data..."));
         loadingLabel.setOutputMarkupId(true);
-        add(loadingLabel);
+        loadingContainer.add(loadingLabel);
 
-        contentContainer = new WebMarkupContainer("contentContainer");
-        contentContainer.setOutputMarkupId(true);
-        contentContainer.setOutputMarkupPlaceholderTag(true);
-        contentContainer.setVisible(false);
-        add(contentContainer);
-        contentContainer.add(new Label("content", Model.of("")));
+        // Form
+        Form<Void> form = new Form<>("form");
+        form.setOutputMarkupId(true);
+        add(form);
 
-        tabsContainer = new WebMarkupContainer("tabsContainer");
-        tabsContainer.setOutputMarkupId(true);
-        add(tabsContainer);
+        // Feedback Panel
+        feedback = new JQueryFeedbackPanel("feedback");
+        feedback.setOutputMarkupId(true);
+        form.add(feedback);
 
-        tabHeaders = new ListView<>("tabHeaders", new ArrayList<>()) {
+        // Initialize TabbedPanel with empty model
+        Options options = new Options();
+        options.set("collapsible", false);
+        options.set("active", 0);
+
+        tabbedPanel = new TabbedPanel("tabs", new TabListModel() {
+            private static final long serialVersionUID = 1L;
+
             @Override
-            protected void populateItem(ListItem<TabData> item) {
-                TabData tabData = item.getModelObject();
-                if (tabData == null) {
-                    throw new IllegalArgumentException("TabData object must not be null.");
-                }
+            protected List<ITab> load() {
+                // Initially return empty list of tabs
+                return new ArrayList<>();
+            }
+        }, options) {
+            private static final long serialVersionUID = 1L;
 
-                String tabId = "tab_" + item.getIndex();
-                AjaxLink<Void> tabLink = new AjaxLink<>("tabLink") {
-                    @Override
-                    public void onClick(AjaxRequestTarget target) {
-                        activeTabId = tabId;
-                        updateTabStates(target);
-
-                        SalesOrderPanel newPanel = new SalesOrderPanel("content", tabData.getContent());
-                        contentContainer.replace(newPanel);
-                        target.add(contentContainer);
-                    }
-
-                    @Override
-                    protected void onConfigure() {
-                        super.onConfigure();
-                        String cssClass = tabId.equals(activeTabId) ? "tab-link active" : "tab-link";
-                        add(AttributeModifier.replace("class", cssClass));
-                    }
-                };
-
-                tabLink.setOutputMarkupId(true);
-                tabLink.add(new Label("tabTitle", tabData.getTitle()));
-                item.add(tabLink);
-
-                if (item.getIndex() == 0 && activeTabId == null) {
-                    activeTabId = tabId;
-                }
+            @Override
+            public void onActivate(AjaxRequestTarget target, int index, ITab tab) {
+                info("Selected tab #" + index + ": " + tab.getTitle());
+                target.add(feedback);
             }
         };
 
-        tabHeaders.setOutputMarkupId(true);
-        tabHeaders.setModel(new ListModel<>(new ArrayList<>()));
-        tabsContainer.add(tabHeaders);
+        tabbedPanel.setOutputMarkupId(true);
+        tabbedPanel.setVisible(false);
+        form.add(tabbedPanel);
 
+        // Add timer behavior to load data
         add(new AbstractAjaxTimerBehavior(Duration.ofSeconds(1)) {
+            private static final long serialVersionUID = 1L;
+
             @Override
             protected void onTimer(AjaxRequestTarget target) {
-                List<SalesOrderItemRow> allItems = getFlattenedModel(fetchSalesOrders());
+                try {
+                    List<SalesOrderItemRow> allItems = getFlattenedModel(fetchSalesOrders());
 
-                if (!allItems.isEmpty()) {
-                    loadingLabel.setDefaultModel(Model.of(""));
-                    loadingLabel.setVisible(false);
-
-                    // Group items by week
-                    Map<String, List<SalesOrderItemRow>> itemsByWeek = allItems.stream()
-                            .collect(Collectors.groupingBy(SalesOrderItemRow::getRequestedDeliveryWeek));
-
-                    // Create tab data for each week
-                    List<TabData> tabDataList = new ArrayList<>();
-                    itemsByWeek.forEach((week, items) -> {
-                        tabDataList.add(new TabData<>("Week " + week, items));
-                    });
-
-                    // Sort tabs by week number (numeric value before the slash)
-                    tabDataList.sort((t1, t2) -> {
-                        // Extract week numbers (part before the slash)
-                        int week1 = Integer.parseInt(t1.getTitle().split(" ")[1].split("/")[0]);
-                        int week2 = Integer.parseInt(t2.getTitle().split(" ")[1].split("/")[0]);
-                        return Integer.compare(week1, week2);
-                    });
-
-                    tabHeaders.setModelObject(tabDataList);
-
-                    if (!tabDataList.isEmpty()) {
-                        SalesOrderPanel newPanel = new SalesOrderPanel("content", tabDataList.get(0).getContent());
-                        contentContainer.replace(newPanel);
-                        contentContainer.setVisible(true);
+                    if (!allItems.isEmpty()) {
+                        loadingContainer.setVisible(false);
+                        updateTabsWithData(allItems, target);
+                        stop(target);
                     }
-
+                } catch (Exception e) {
+                    LOG.error("Error loading sales order data", e);
+                    error("Failed to load sales order data: " + e.getMessage());
                     stop(target);
-                    target.add(loadingLabel, contentContainer, tabsContainer);
                 }
+
+                target.add(loadingContainer, form, feedback);
             }
         });
     }
 
+    /**
+     * Updates the tabbed panel with the fetched sales order data
+     */
+    private void updateTabsWithData(List<SalesOrderItemRow> allItems, AjaxRequestTarget target) {
+        // Group items by week
+        Map<String, List<SalesOrderItemRow>> itemsByWeek = allItems.stream()
+                .collect(Collectors.groupingBy(SalesOrderItemRow::getRequestedDeliveryWeek));
+
+        // Create tab data list
+        List<TabData<List<SalesOrderItemRow>>> tabDataList = new ArrayList<>();
+        itemsByWeek.forEach((week, items) -> {
+            tabDataList.add(new TabData<>("Week " + week, Collections.singletonList(items)));
+        });
+
+        // Sort tabs by week number
+        tabDataList.sort((t1, t2) -> {
+            try {
+                int week1 = Integer.parseInt(t1.getTitle().split(" ")[1].split("/")[0]);
+                int week2 = Integer.parseInt(t2.getTitle().split(" ")[1].split("/")[0]);
+                return Integer.compare(week1, week2);
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                LOG.warn("Error parsing week numbers for sorting", e);
+                return t1.getTitle().compareTo(t2.getTitle());
+            }
+        });
+
+        // Create new tabs and update the model
+        List<ITab> tabs = createTabsFromData(tabDataList);
+
+        // Replace the existing tabbedPanel with a new one
+        Form<?> form = (Form<?>) tabbedPanel.getParent();
+        form.remove(tabbedPanel);
+
+        Options options = new Options();
+        options.set("collapsible", false);
+        options.set("active", 0);
+
+        tabbedPanel = new TabbedPanel("tabs", tabs, options) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void onActivate(AjaxRequestTarget target, int index, ITab tab) {
+                info("Selected tab #" + index + ": " + tab.getTitle());
+                target.add(feedback);
+            }
+        };
+
+        tabbedPanel.setOutputMarkupId(true);
+        tabbedPanel.setVisible(true);
+        form.add(tabbedPanel);
+
+        info("Loaded " + tabs.size() + " delivery weeks");
+    }
+
+    /**
+     * Creates ITab objects from tab data
+     */
+    private List<ITab> createTabsFromData(List<TabData<List<SalesOrderItemRow>>> tabDataList) {
+        List<ITab> tabs = new ArrayList<>();
+
+        for (TabData<List<SalesOrderItemRow>> tabData : tabDataList) {
+            // Create a model that will be used to create the panel
+            final Model<Serializable> contentModel = Model.of();
+
+            // Use AbstractTab instead of SimpleTab to properly override getPanel
+            tabs.add(new org.apache.wicket.extensions.markup.html.tabs.AbstractTab(Model.of(tabData.getTitle())) {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public org.apache.wicket.markup.html.WebMarkupContainer getPanel(String panelId) {
+                    return new SalesOrderPanel(panelId, (List<SalesOrderItemRow>) contentModel.getObject());
+                }
+            });
+        }
+
+        return tabs;
+    }
+
+    /**
+     * Fetches sales orders from the API
+     */
     private List<SalesOrderDto> fetchSalesOrders() {
         String apiUrl = MAIN_ADDRESS + "api/sap/getSalesOrders";
         try {
@@ -149,17 +208,19 @@ public class SalesOrderDynamicTabsPage extends Panel {
                     apiUrl,
                     HttpMethod.GET,
                     null,
-                    new ParameterizedTypeReference<>() {
-                    }
+                    new ParameterizedTypeReference<>() {}
             );
             return response.getBody();
         } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Error fetching sales orders data", e);
+            LOG.error("Error fetching sales orders data", e);
             return Collections.emptyList();
         }
     }
 
-    private List<SalesOrderItemRow> getFlattenedModel(List<SalesOrderDto> salesOrders){
+    /**
+     * Converts SalesOrderDto list to flattened SalesOrderItemRow list
+     */
+    private List<SalesOrderItemRow> getFlattenedModel(List<SalesOrderDto> salesOrders) {
         List<SalesOrderItemRow> rows = new ArrayList<>();
         for (SalesOrderDto order : salesOrders) {
             if (order.getToItem() == null || order.getToItem().isEmpty()) {
@@ -168,17 +229,12 @@ public class SalesOrderDynamicTabsPage extends Panel {
             } else {
                 // Add a row for each item in the order
                 for (ToItem item : order.getToItem()) {
-                    if (StringUtils.left(item.getMaterial(),2).equals("10")){
+                    if (StringUtils.left(item.getMaterial(), 2).equals("10")) {
                         rows.add(new SalesOrderItemRow(order, item));
                     }
                 }
             }
         }
         return rows;
-    };
-
-
-    private void updateTabStates(AjaxRequestTarget target) {
-        target.add(tabsContainer);
     }
 }

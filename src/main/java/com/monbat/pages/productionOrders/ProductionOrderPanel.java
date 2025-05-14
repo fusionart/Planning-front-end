@@ -1,19 +1,21 @@
 package com.monbat.pages.productionOrders;
 
-import com.monbat.components.genericTable.ColumnDefinition;
-import com.monbat.components.genericTable.GenericDataTablePanel;
-import com.monbat.components.genericTable.PropertyColumnDefinition;
 import com.monbat.models.dto.sap.ProductionOrderDto;
+import com.shieldui.wicket.datasource.DataSourceOptions;
+import com.shieldui.wicket.grid.Grid;
+import com.shieldui.wicket.grid.GridOptions;
+import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.panel.Panel;
-import org.apache.wicket.model.IModel;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,44 +30,57 @@ public class ProductionOrderPanel extends Panel {
 
         restTemplate = new RestTemplate();
 
-        List<ProductionOrderDto> result = fetchProductionOrders(); // Your list
+        List<ProductionOrderDto> productionOrders = fetchProductionOrders();
 
-        IModel<Collection<ProductionOrderDto>> model = () -> result;
+        final Grid grid = new Grid("gridContainer");
+        GridOptions options = grid.getOptions();
 
-        // Define columns
-        List<ColumnDefinition<ProductionOrderDto>> columns = Arrays.asList(
-                // Checkbox column would need a custom column definition
-                new PropertyColumnDefinition<>("Material", "material", true, false),
-                new PropertyColumnDefinition<>("Material desc", "materialDescription", true, false),
-                new PropertyColumnDefinition<>("Prod. order", "productionOrder", true, false),
-                new PropertyColumnDefinition<>("Prod. plant", "productionPlant"),
-                new PropertyColumnDefinition<>("Is released", "orderIsReleased", true, false),
-                new PropertyColumnDefinition<>("Is scheduled", "orderIsScheduled"),
-                new PropertyColumnDefinition<>("Prod. supervisor", "productionSupervisor"),
-                new PropertyColumnDefinition<>("Prod. version", "productionVersion"),
-                new PropertyColumnDefinition<>("Work center", "workCenter", true, false),
-                new PropertyColumnDefinition<>("Start date", "mfgOrderScheduledStartDate", true, false),
-                new PropertyColumnDefinition<>("Start time", "mfgOrderScheduledStartTime"),
-                new PropertyColumnDefinition<>("End date", "mfgOrderScheduledEndDate"),
-                new PropertyColumnDefinition<>("End time", "mfgOrderScheduledEndTime"),
-                new PropertyColumnDefinition<>("Prod. unit", "productionUnit"),
-                new PropertyColumnDefinition<>("Total qty", "totalQuantity"),
-                new PropertyColumnDefinition<>("Confirmed qty", "mfgOrderConfirmedYieldQty")
-        );
+        // Set data directly
+        DataSourceOptions dataSourceOptions = new DataSourceOptions();
+        dataSourceOptions.setData(productionOrders);
 
-        // Create filter function
-        GenericDataTablePanel<ProductionOrderDto> dataTablePanel =
-                new GenericDataTablePanel<>(
-                        "table",
-                        model,
-                        columns,
-                        detail -> Arrays.asList(
-                                detail.getMaterial() != null ? detail.getMaterial() : "",
-                                detail.getWorkCenter() != null ? detail.getWorkCenter() : ""
-                        )
-                );
+        options.setDataSource(dataSourceOptions);
+        options.setColumns(createColumnsFromEntityClass(ProductionOrderDto.class));
 
-        add(dataTablePanel);
+        // Enable features
+        // Paging options
+        GridOptions.Paging paging = new GridOptions.Paging();
+        paging.setPageSize(10);
+        options.setPaging(paging);
+        options.setSorting(new GridOptions.Sorting());
+        options.setFiltering(new GridOptions.Filtering());
+        options.setSelection(new GridOptions.Selection());
+
+        add(grid);
+    }
+
+    private List<GridOptions.ColumnOption> createColumnsFromEntityClass(Class<?> entityClass) {
+        List<GridOptions.ColumnOption> columns = new ArrayList<>();
+
+        for (Field field : entityClass.getDeclaredFields()) {
+            if (!java.lang.reflect.Modifier.isStatic(field.getModifiers()) &&
+                    !java.lang.reflect.Modifier.isTransient(field.getModifiers())) {
+
+                String fieldName = field.getName();
+
+                GridOptions.ColumnOption column = new GridOptions.ColumnOption()
+                        .setField(fieldName)
+                        .setTitle(capitalizeFirstLetter(fieldName));
+
+                if (field.getType() == boolean.class || field.getType() == Boolean.class) {
+                    column.setFormat("{{if " + fieldName + "}}Yes{{else}}No{{/if}}");
+                }
+
+                columns.add(column);
+            }
+        }
+
+        return columns;
+    }
+
+    private String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
     private List<ProductionOrderDto> fetchProductionOrders() {
@@ -80,8 +95,19 @@ public class ProductionOrderPanel extends Panel {
             );
             return response.getBody();
         } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Error fetching production orders data", e);
+            LoggerFactory.getLogger(getClass()).error("Error fetching production orders", e);
             return Collections.emptyList();
         }
     }
+
+    @Override
+    public void renderHead(IHeaderResponse response) {
+        super.renderHead(response);
+
+        // Linking to the external CSS and JavaScript files
+        response.render(CssHeaderItem.forUrl("https://www.shieldui.com/shared/components/latest/css/light/all.min.css"));
+        response.render(JavaScriptHeaderItem.forUrl("https://www.shieldui.com/shared/components/latest/js/jquery-1.10.2.min.js"));
+        response.render(JavaScriptHeaderItem.forUrl("https://www.shieldui.com/shared/components/latest/js/shieldui-all.min.js"));
+    }
+
 }
