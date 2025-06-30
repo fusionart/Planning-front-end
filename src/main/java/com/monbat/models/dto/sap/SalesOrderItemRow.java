@@ -20,6 +20,7 @@ public class SalesOrderItemRow implements Serializable {
     private final String material;
     private final String quantityWithUnit;
     private final String sDProcessStatus;
+    private final String completeDelivery;
 
     public SalesOrderItemRow(SalesOrderDto order, ToItem item) {
         this.order = order;
@@ -33,5 +34,6 @@ public class SalesOrderItemRow implements Serializable {
                 item.getRequestedQuantity() + " " + item.getRequestedQuantityUnit() : "N/A";
         this.sDProcessStatus = item != null ? item.getSDProcessStatus() : "N/A";
         this.requestedDeliveryWeek = order.getRequestedDeliveryWeek();
+        this.completeDelivery = order.getCompleteDelivery();
     }
 }

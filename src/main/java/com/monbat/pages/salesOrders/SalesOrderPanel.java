@@ -60,7 +60,8 @@ public class SalesOrderPanel extends Panel implements Serializable {
                             String.valueOf(detail.getItem().getMaterial()),
                             String.valueOf(detail.getItem().getRequestedQuantity()),
                             String.valueOf(total),
-                            String.valueOf(detail.getSDProcessStatus())
+                            String.valueOf(detail.getSDProcessStatus()),
+                            String.valueOf(detail.getCompleteDelivery())
                     );
                 }
         );

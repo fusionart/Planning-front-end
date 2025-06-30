@@ -1,8 +1,11 @@
 package com.monbat.models.dto.sap;
 
+import com.inmethod.grid.IDataSource;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.wicket.model.IModel;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -11,7 +14,8 @@ import java.time.LocalTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ProductionOrderDto implements Serializable {
+@AllArgsConstructor
+public class ProductionOrderDto implements Serializable, IDataSource<String> {
     private String material;
     private String materialDescription;
     private String productionOrder;
@@ -29,4 +33,19 @@ public class ProductionOrderDto implements Serializable {
     private String productionUnit;
     private Double totalQuantity;
     private Double mfgOrderConfirmedYieldQty;
+
+    @Override
+    public void query(IQuery query, IQueryResult<String> result) {
+
+    }
+
+    @Override
+    public IModel<String> model(String object) {
+        return null;
+    }
+
+    @Override
+    public void detach() {
+
+    }
 }

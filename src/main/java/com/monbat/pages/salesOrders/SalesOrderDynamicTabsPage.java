@@ -8,9 +8,11 @@ import com.monbat.models.dto.sap.SalesOrderDto;
 import com.monbat.models.dto.sap.SalesOrderItemRow;
 import com.monbat.models.dto.sap.ToItem;
 import com.monbat.models.entities.TabData;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.extensions.markup.html.tabs.AbstractTab;
 import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
@@ -24,9 +26,11 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.Serializable;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -174,23 +178,19 @@ public class SalesOrderDynamicTabsPage extends Panel {
         info("Loaded " + tabs.size() + " delivery weeks");
     }
 
-    /**
-     * Creates ITab objects from tab data
-     */
     private List<ITab> createTabsFromData(List<TabData<List<SalesOrderItemRow>>> tabDataList) {
         List<ITab> tabs = new ArrayList<>();
 
         for (TabData<List<SalesOrderItemRow>> tabData : tabDataList) {
-            // Create a model that will be used to create the panel
-            final Model<Serializable> contentModel = Model.of();
+            // Get the actual data from tabData and create a model with it
+            final List<SalesOrderItemRow> contentModel = tabData.getContent().get(0);
 
-            // Use AbstractTab instead of SimpleTab to properly override getPanel
-            tabs.add(new org.apache.wicket.extensions.markup.html.tabs.AbstractTab(Model.of(tabData.getTitle())) {
+            tabs.add(new AbstractTab(Model.of(tabData.getTitle())) {
                 private static final long serialVersionUID = 1L;
 
                 @Override
-                public org.apache.wicket.markup.html.WebMarkupContainer getPanel(String panelId) {
-                    return new SalesOrderPanel(panelId, (List<SalesOrderItemRow>) contentModel.getObject());
+                public WebMarkupContainer getPanel(String panelId) {
+                    return new SalesOrderPanel(panelId, contentModel);
                 }
             });
         }
@@ -198,21 +198,26 @@ public class SalesOrderDynamicTabsPage extends Panel {
         return tabs;
     }
 
-    /**
-     * Fetches sales orders from the API
-     */
     private List<SalesOrderDto> fetchSalesOrders() {
         String apiUrl = MAIN_ADDRESS + "api/sap/getSalesOrders";
+        Base64 base64 = new Base64();
         try {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiUrl)
+                    .queryParam("username", new String(base64.encode("niliev".getBytes())))
+                    .queryParam("password", new String(base64.encode("21Zaq12wsx!!".getBytes())))
+                    .queryParam("reqDelDateBegin", LocalDate.of(2025, Month.MARCH, 1).atStartOfDay())
+                    .queryParam("reqDelDateEnd", LocalDate.of(2025, Month.MARCH, 31).atStartOfDay());
+
             ResponseEntity<List<SalesOrderDto>> response = restTemplate.exchange(
-                    apiUrl,
+                    builder.toUriString(),
                     HttpMethod.GET,
                     null,
-                    new ParameterizedTypeReference<>() {}
+                    new ParameterizedTypeReference<>() {
+                    }
             );
-            return response.getBody();
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
         } catch (Exception e) {
-            LOG.error("Error fetching sales orders data", e);
+            LoggerFactory.getLogger(getClass()).error("Error fetching production orders", e);
             return Collections.emptyList();
         }
     }

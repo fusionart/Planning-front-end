@@ -1,113 +1,150 @@
 package com.monbat.pages.productionOrders;
 
+import com.inmethod.grid.IDataSource;
+import com.inmethod.grid.IGridColumn;
+import com.inmethod.grid.column.PropertyColumn;
+import com.inmethod.grid.datagrid.DataGrid;
+import com.inmethod.grid.datagrid.DefaultDataGrid;
 import com.monbat.models.dto.sap.ProductionOrderDto;
-import com.shieldui.wicket.datasource.DataSourceOptions;
-import com.shieldui.wicket.grid.Grid;
-import com.shieldui.wicket.grid.GridOptions;
-import org.apache.wicket.markup.head.CssHeaderItem;
-import org.apache.wicket.markup.head.IHeaderResponse;
-import org.apache.wicket.markup.head.JavaScriptHeaderItem;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.LoadableDetachableModel;
+import org.apache.wicket.model.Model;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.monbat.utils.Constants.MAIN_ADDRESS;
-
 public class ProductionOrderPanel extends Panel {
-    private final transient RestTemplate restTemplate;
+
+    private static final String MAIN_ADDRESS = "http://localhost:8080/";
+    private final transient RestTemplate restTemplate = new RestTemplate();
+    private final IModel<List<ProductionOrderDto>> dataModel;
 
     public ProductionOrderPanel(String id) {
         super(id);
         setOutputMarkupId(true);
 
-        restTemplate = new RestTemplate();
+        // Initialize model first
+        this.dataModel = createProductionOrderModel();
+        setDefaultModel(dataModel); // Set as default model
 
-        List<ProductionOrderDto> productionOrders = fetchProductionOrders();
+        WebMarkupContainer gridContainer = new WebMarkupContainer("gridContainer");
+        gridContainer.setOutputMarkupId(true);
+        add(gridContainer);
 
-        final Grid grid = new Grid("gridContainer");
-        GridOptions options = grid.getOptions();
+        IDataSource<ProductionOrderDto> dataSource = new ProductionOrderDataSource(dataModel);
 
-        // Set data directly
-        DataSourceOptions dataSourceOptions = new DataSourceOptions();
-        dataSourceOptions.setData(productionOrders);
+        List<IGridColumn<IDataSource<ProductionOrderDto>, ProductionOrderDto, String>> columns = createColumns();
 
-        options.setDataSource(dataSourceOptions);
-        options.setColumns(createColumnsFromEntityClass(ProductionOrderDto.class));
+        DataGrid<IDataSource<ProductionOrderDto>, ProductionOrderDto, String> dataGrid =
+                new DefaultDataGrid<>("dataGrid", dataSource, columns);
 
-        // Enable features
-        // Paging options
-        GridOptions.Paging paging = new GridOptions.Paging();
-        paging.setPageSize(10);
-        options.setPaging(paging);
-        options.setSorting(new GridOptions.Sorting());
-        options.setFiltering(new GridOptions.Filtering());
-        options.setSelection(new GridOptions.Selection());
-
-        add(grid);
+        dataGrid.setRowsPerPage(20);
+        dataGrid.setOutputMarkupId(true);
+        gridContainer.add(dataGrid);
     }
 
-    private List<GridOptions.ColumnOption> createColumnsFromEntityClass(Class<?> entityClass) {
-        List<GridOptions.ColumnOption> columns = new ArrayList<>();
-
-        for (Field field : entityClass.getDeclaredFields()) {
-            if (!java.lang.reflect.Modifier.isStatic(field.getModifiers()) &&
-                    !java.lang.reflect.Modifier.isTransient(field.getModifiers())) {
-
-                String fieldName = field.getName();
-
-                GridOptions.ColumnOption column = new GridOptions.ColumnOption()
-                        .setField(fieldName)
-                        .setTitle(capitalizeFirstLetter(fieldName));
-
-                if (field.getType() == boolean.class || field.getType() == Boolean.class) {
-                    column.setFormat("{{if " + fieldName + "}}Yes{{else}}No{{/if}}");
-                }
-
-                columns.add(column);
+    private IModel<List<ProductionOrderDto>> createProductionOrderModel() {
+        return new LoadableDetachableModel<>() {
+            @Override
+            protected List<ProductionOrderDto> load() {
+                List<ProductionOrderDto> orders = fetchProductionOrders();
+                LoggerFactory.getLogger(ProductionOrderPanel.class)
+                        .info("Loaded {} production orders", orders.size());
+                return orders;
             }
-        }
 
-        return columns;
+            @Override
+            protected void onDetach() {
+                super.onDetach();
+                LoggerFactory.getLogger(ProductionOrderPanel.class)
+                        .debug("Production order model detached");
+            }
+        };
     }
 
-    private String capitalizeFirstLetter(String input) {
-        if (input == null || input.isEmpty()) return input;
-        return input.substring(0, 1).toUpperCase() + input.substring(1);
+    private List<IGridColumn<IDataSource<ProductionOrderDto>, ProductionOrderDto, String>> createColumns() {
+        List<IGridColumn<IDataSource<ProductionOrderDto>, ProductionOrderDto, String>> columns = new ArrayList<>();
+
+        for (Field field : ProductionOrderDto.class.getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) continue;
+            if (Modifier.isTransient(field.getModifiers())) continue;
+
+            String name = field.getName();
+            columns.add(new PropertyColumn<>(
+                    Model.of(capitalize(name)),
+                    name
+            ));
+        }
+        return columns;
     }
 
     private List<ProductionOrderDto> fetchProductionOrders() {
         String apiUrl = MAIN_ADDRESS + "api/sap/getProductionOrders";
+        Base64 base64 = new Base64();
         try {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiUrl)
+                    .queryParam("username", new String(base64.encode("niliev".getBytes())))
+                    .queryParam("password", new String(base64.encode("21Zaq12wsx!!".getBytes())))
+                    .queryParam("reqDelDateBegin", LocalDate.of(2025, Month.MARCH, 1).atStartOfDay())
+                    .queryParam("reqDelDateEnd", LocalDate.of(2025, Month.MARCH, 31).atStartOfDay());
+
             ResponseEntity<List<ProductionOrderDto>> response = restTemplate.exchange(
-                    apiUrl,
+                    builder.toUriString(),
                     HttpMethod.GET,
                     null,
                     new ParameterizedTypeReference<>() {
                     }
             );
-            return response.getBody();
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error fetching production orders", e);
             return Collections.emptyList();
         }
     }
 
-    @Override
-    public void renderHead(IHeaderResponse response) {
-        super.renderHead(response);
-
-        // Linking to the external CSS and JavaScript files
-        response.render(CssHeaderItem.forUrl("https://www.shieldui.com/shared/components/latest/css/light/all.min.css"));
-        response.render(JavaScriptHeaderItem.forUrl("https://www.shieldui.com/shared/components/latest/js/jquery-1.10.2.min.js"));
-        response.render(JavaScriptHeaderItem.forUrl("https://www.shieldui.com/shared/components/latest/js/shieldui-all.min.js"));
+    private String capitalize(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
+    @Override
+    protected void onInitialize() {
+        super.onInitialize();
+        LoggerFactory.getLogger(ProductionOrderPanel.class)
+                .debug("ProductionOrderPanel initialized");
+    }
+
+    @Override
+    protected void onConfigure() {
+        super.onConfigure();
+        // Safe model detachment
+        if (dataModel != null) {
+            dataModel.detach();
+        }
+    }
+
+    @Override
+    protected void onDetach() {
+        super.onDetach();
+        // Clean up model when panel detaches
+        if (dataModel != null) {
+            dataModel.detach();
+        }
+    }
 }

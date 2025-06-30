@@ -16,5 +16,6 @@ public class SalesOrderDto implements Serializable {
     private String soldToParty;
     private LocalDate requestedDeliveryDate;
     private String requestedDeliveryWeek;
+    private String completeDelivery;
     private List<ToItem> toItem;
 }
