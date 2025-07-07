@@ -32,6 +32,14 @@ public class BasePage extends WebPage {
     public void renderHead(IHeaderResponse response) {
         super.renderHead(response);
 
+        // Add local jQuery and jQuery UI
+        response.render(JavaScriptHeaderItem.forReference(
+                new JavaScriptResourceReference(BasePage.class, "js/jquery-3.7.1.min.js")));
+        response.render(JavaScriptHeaderItem.forReference(
+                new JavaScriptResourceReference(BasePage.class, "js/jquery-ui.min.js")));
+        response.render(CssHeaderItem.forReference(
+                new CssResourceReference(BasePage.class, "css/jquery-ui.min.css")));
+
         // Add Bootstrap CSS
         response.render(CssHeaderItem.forReference(
                 new CssResourceReference(BasePage.class, "css/bootstrap.min.css")));

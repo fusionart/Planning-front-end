@@ -1,9 +1,17 @@
 <wicket:panel>
     <div wicket:id="loadingContainer">
-        <div wicket:id="loadingLabel"></div>
+        <span wicket:id="loadingLabel"></span>
     </div>
+
     <form wicket:id="form">
-        <div wicket:id="tabs"></div>
+        <div>
+            <input type="text" wicket:id="startDatePicker" placeholder="dd.mm.yyyy" />
+            <input type="text" wicket:id="endDatePicker" placeholder="dd.mm.yyyy" />
+            <button wicket:id="applyDateRangeButton">Apply</button>
+        </div>
+
         <div wicket:id="feedback"></div>
+        <div wicket:id="tabs"></div>
     </form>
 </wicket:panel>
+

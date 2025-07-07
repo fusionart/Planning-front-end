@@ -40,3 +40,18 @@
     border-radius: 0 0 8px 8px; /* Rounded bottom corners */
     min-height: 200px; /* Ensure content area is visible */
 }
+
+.center-area {
+    min-height: 500px;
+    position: relative;
+}
+
+.ui-tabs-panel.ui-widget-content {
+    display: block !important;
+    padding: 15px;
+    background: white;
+}
+
+.ui-tabs .ui-tabs-panel {
+    display: block !important;
+}

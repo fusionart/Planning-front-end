@@ -51,11 +51,12 @@ public class ReadinessTable extends Panel {
                         String.valueOf(detail.getAvailableQuantity20())
                 );
 
-        return new GenericDataTablePanel<>(
-                "table",
-                model,
-                columns,
-                filterFunc
-        );
+//        return new GenericDataTablePanel<>(
+//                "table",
+//                model,
+//                columns,
+//                filterFunc
+//        );
+        return null;
     }
 }
