@@ -170,12 +170,6 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         return endDatePicker;
     }
 
-    @Override
-    protected void onInitialize() {
-        super.onInitialize();
-    }
-
-
     private void loadSalesOrderData(AjaxRequestTarget target) {
         loadingContainer.setVisible(true); // Show loading indicator
         loadingLabel.setDefaultModelObject("Loading sales order from SAP ...");

@@ -55,3 +55,91 @@
 .ui-tabs .ui-tabs-panel {
     display: block !important;
 }
+
+
+/*new tabs*/
+/* Updated date range controls */
+.date-range-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center; /* Changed from flex-end to center for better alignment */
+    margin-bottom: 20px;
+}
+
+.date-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 200px;
+}
+
+.date-picker label {
+    margin-bottom: 0; /* Remove bottom margin */
+    font-weight: bold;
+    white-space: nowrap; /* Prevent label from wrapping */
+}
+
+/* Updated week tabs styling */
+/* Replace the existing .week-tabs styles with these: */
+.week-tabs {
+    margin: 0;
+    padding: 0;
+}
+
+.week-tabs > ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-bottom: 2px solid #11558f;
+    background-color: #f8f8f8;
+    padding-left: 15px;
+}
+
+.week-tabs > ul > li {
+    padding: 8px 20px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-bottom: none;
+    background-color: #ddd;
+    margin-right: 5px;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+    color: #11558f;
+}
+
+.week-tabs > ul > li:hover {
+    background-color: #cfcfcf;
+    color: black;
+}
+
+.week-tabs > ul > li.active {
+    background-color: #11558f;
+    color: white;
+    border-color: #11558f;
+    border-bottom: 2px solid white;
+    font-weight: bold;
+}
+
+.week-tabs .tab-content {
+    padding: 15px;
+    border: 2px solid #11558f;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    min-height: 200px;
+    background: white;
+}
+
+/* Keep existing styles for other elements */
+.date-range-container {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.apply-button {
+    height: 38px;
+    margin-bottom: 1px;
+}

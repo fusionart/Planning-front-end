@@ -1,0 +1,23 @@
+<wicket:panel>
+    <div class="date-range-container">
+        <!-- Form with date range selector row -->
+        <form wicket:id="form">
+            <div class="date-range-controls">
+                <div class="date-picker">
+                    <label>From:</label>
+                    <input type="text" wicket:id="startDatePicker" class="form-control">
+                </div>
+                <div class="date-picker">
+                    <label>To:</label>
+                    <input type="text" wicket:id="endDatePicker" class="form-control">
+                </div>
+                <button wicket:id="apply" class="btn btn-primary apply-button">Apply</button>
+            </div>
+        </form>
+
+        <!-- Tabs container -->
+        <div class="week-tabs-container">
+            <div wicket:id="tabs" class="week-tabs"></div>
+        </div>
+    </div>
+</wicket:panel>

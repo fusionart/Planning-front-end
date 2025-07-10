@@ -7,7 +7,7 @@ import com.monbat.pages.machinespage.MachineDataPage;
 import com.monbat.pages.newTimeline.TimelinePage;
 import com.monbat.pages.productionOrders.ProductionOrderPanel;
 import com.monbat.pages.salesOrders.SalesOrderDynamicTabsPage;
-import com.monbat.pages.tabs.DynamicTabsPage;
+import com.monbat.pages.test.DateRangePage;
 import com.monbat.pages.timeline.TimeLine;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
@@ -38,7 +38,7 @@ public class MenuBar extends Panel {
 			@Override
 			public void onClick(AjaxRequestTarget target) {
 				CenterArea centerArea = (CenterArea) getPage().get(CENTER_AREA);
-				centerArea.replace(new DynamicTabsPage(CONTENT));
+				centerArea.replace(new DateRangePage(CONTENT));
 				target.add(centerArea);
 			}
 		});
