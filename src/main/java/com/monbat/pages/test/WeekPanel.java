@@ -21,7 +21,7 @@ public class WeekPanel extends Panel {
         add(new Label("weekLabel", "Week: " + week));
 
         // Sales orders list for the week
-        add(new ListView<SalesOrder>("salesOrders", salesOrders) {
+        add(new ListView<>("salesOrders", salesOrders) {
             @Override
             protected void populateItem(ListItem<SalesOrder> item) {
                 SalesOrder so = item.getModelObject();

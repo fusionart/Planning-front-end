@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import static com.monbat.utils.Constants.MAIN_ADDRESS;
+import static com.monbat.utils.Constants.*;
 
 public class MaterialStockApiClient {
     private static final RestTemplate restTemplate = new RestTemplate();
@@ -18,8 +18,8 @@ public class MaterialStockApiClient {
         Base64 base64 = new Base64();
         try {
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiUrl)
-                    .queryParam("username", new String(base64.encode("niliev".getBytes())))
-                    .queryParam("password", new String(base64.encode("21Zaq12wsx!!".getBytes())))
+                    .queryParam("username", new String(base64.encode(SAP_USERNAME.getBytes())))
+                    .queryParam("password", new String(base64.encode(SAP_PASSWORD.getBytes())))
                     .queryParam("material", material);
 
             ResponseEntity<Double> response = restTemplate.exchange(

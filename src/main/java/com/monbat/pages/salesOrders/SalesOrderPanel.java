@@ -15,6 +15,12 @@ import com.monbat.services.api.MaterialStockApiClient;
 import com.monbat.utils.CustomDictionary;
 import com.monbat.utils.enums.TableNames;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.wicket.AttributeModifier;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.list.ListItem;
+import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 
@@ -23,14 +29,63 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SalesOrderPanel extends Panel implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final List<SalesOrder> salesOrders;
+    private final List<PlannedOrder> plannedOrderList;
+    private final List<ProductionOrder> productionOrderList;
+    private final List<TabInfo> tabs;
+    private int activeTabIndex = 0;
+
     public SalesOrderPanel(String id, List<SalesOrder> items, List<PlannedOrder> plannedOrderList, List<ProductionOrder> productionOrderList) {
         super(id);
         setOutputMarkupId(true);
 
-        IModel<Collection<SalesOrderMain>> model = () -> generateSalesOrderMainData(items, plannedOrderList,
-                productionOrderList);
+        this.salesOrders = items;
+        this.plannedOrderList = plannedOrderList;
+        this.productionOrderList = productionOrderList;
+        this.tabs = createTabs();
+
+        // Create tab navigation
+        ListView<TabInfo> tabList = new ListView<TabInfo>("tabList", tabs) {
+            @Override
+            protected void populateItem(ListItem<TabInfo> item) {
+                TabInfo tab = item.getModelObject();
+                int tabIndex = item.getIndex();
+
+                AjaxLink<Void> tabLink = new AjaxLink<Void>("tabLink") {
+                    @Override
+                    public void onClick(AjaxRequestTarget target) {
+                        activeTabIndex = tabIndex;
+                        target.add(SalesOrderPanel.this);
+                    }
+                };
+
+                // Add active class if this is the active tab
+                if (tabIndex == activeTabIndex) {
+                    tabLink.add(new AttributeModifier("class", "nav-link active"));
+                } else {
+                    tabLink.add(new AttributeModifier("class", "nav-link"));
+                }
+
+                tabLink.add(new Label("tabTitle", tab.getTitle()));
+                item.add(tabLink);
+            }
+        };
+        add(tabList);
+
+        // Create active tab content
+        createActiveTabContent();
+    }
+
+    private void createActiveTabContent() {
+        TabInfo activeTab = tabs.get(activeTabIndex);
+        IModel<Collection<SalesOrderMain>> model = () -> generateSalesOrderMainData(
+                activeTab.getSalesOrders(), plannedOrderList, productionOrderList);
 
         // Create columns dynamically
         List<ColumnDefinition<SalesOrderMain>> columns = createDynamicColumns();
@@ -39,17 +94,51 @@ public class SalesOrderPanel extends Panel implements Serializable {
         Function<SalesOrderMain, List<String>> filterFunction = createSerializableFilterFunction();
 
         GenericDataTablePanel<SalesOrderMain> dataTablePanel = new GenericDataTablePanel<>(
-                "table",
+                "activeTabContent",
                 model,
                 columns,
                 filterFunction
         );
 
+        // Remove existing content if any
+        if (get("activeTabContent") != null) {
+            remove("activeTabContent");
+        }
+
+        dataTablePanel.setOutputMarkupId(true);
         add(dataTablePanel);
     }
 
+    private List<TabInfo> createTabs() {
+        List<TabInfo> tabList = new ArrayList<>();
+
+        // Group sales orders by plant or another meaningful criteria
+        Map<String, List<SalesOrder>> groupedOrders = salesOrders.stream()
+                .collect(Collectors.groupingBy(order -> getPlantName(order)));
+
+        // If no meaningful grouping, create a single "All Orders" tab
+        if (groupedOrders.size() <= 1) {
+            tabList.add(new TabInfo("All Orders", salesOrders));
+        } else {
+            // Create tabs for each group
+            for (Map.Entry<String, List<SalesOrder>> entry : groupedOrders.entrySet()) {
+                tabList.add(new TabInfo(entry.getKey(), entry.getValue()));
+            }
+        }
+
+        return tabList;
+    }
+
+    private String getPlantName(SalesOrder order) {
+        if (order.getToItem() != null && !order.getToItem().isEmpty()) {
+            SalesOrderItem firstItem = order.getToItem().get(0);
+            return getPlantName(firstItem, MaterialApiClient.getData());
+        }
+        return "Unknown";
+    }
+
     private List<SalesOrderMain> generateSalesOrderMainData(List<SalesOrder> filteredSalesOrders,
-                                                                  List<PlannedOrder> plannedOrderList, List<ProductionOrder> productionOrderList) {
+                                                            List<PlannedOrder> plannedOrderList, List<ProductionOrder> productionOrderList) {
         List<SalesOrderMain> localSalesOrderMainList = new ArrayList<>();
         List<Material> materialList = MaterialApiClient.getData();
 
@@ -164,26 +253,6 @@ public class SalesOrderPanel extends Panel implements Serializable {
                 type == float.class;
     }
 
-    private Function<SalesOrder, List<String>> createFilterFunction() {
-        return item -> {
-            List<String> searchableValues = new ArrayList<>();
-
-            // Add all standard fields
-            Field[] fields = SalesOrder.class.getDeclaredFields();
-            for (Field field : fields) {
-                try {
-                    field.setAccessible(true);
-                    Object value = field.get(item);
-                    searchableValues.add(value != null ? value.toString() : "");
-                } catch (IllegalAccessException e) {
-                    searchableValues.add("");
-                }
-            }
-
-            return searchableValues;
-        };
-    }
-
     private Function<SalesOrderMain, List<String>> createSerializableFilterFunction() {
         return new SerializableFunction<>() {
             @Serial
@@ -209,8 +278,36 @@ public class SalesOrderPanel extends Panel implements Serializable {
         };
     }
 
+    @Override
+    protected void onBeforeRender() {
+        super.onBeforeRender();
+        createActiveTabContent();
+    }
+
     private static abstract class SerializableFunction<T, R> implements Function<T, R>, Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
+    }
+
+    // Inner class to represent tab information
+    private static class TabInfo implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private final String title;
+        private final List<SalesOrder> salesOrders;
+
+        public TabInfo(String title, List<SalesOrder> salesOrders) {
+            this.title = title;
+            this.salesOrders = salesOrders;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public List<SalesOrder> getSalesOrders() {
+            return salesOrders;
+        }
     }
 }

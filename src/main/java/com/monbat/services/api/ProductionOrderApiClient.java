@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
-import static com.monbat.utils.Constants.MAIN_ADDRESS;
+import static com.monbat.utils.Constants.*;
 
 public class ProductionOrderApiClient {
     private static final RestTemplate restTemplate = new RestTemplate();
@@ -23,8 +23,8 @@ public class ProductionOrderApiClient {
         Base64 base64 = new Base64();
         try {
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiUrl)
-                    .queryParam("username", new String(base64.encode("niliev".getBytes())))
-                    .queryParam("password", new String(base64.encode("21Zaq12wsx!!".getBytes())))
+                    .queryParam("username", new String(base64.encode(SAP_USERNAME.getBytes())))
+                    .queryParam("password", new String(base64.encode(SAP_PASSWORD.getBytes())))
                     .queryParam("reqDelDateBegin", reqDelDateBegin.atStartOfDay())
                     .queryParam("reqDelDateEnd", reqDelDateEnd.atTime(23, 59));
 

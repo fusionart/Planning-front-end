@@ -1,145 +1,86 @@
-.tab-container {
-    display: flex;
-    border-bottom: 2px solid #11558f; /* Stronger bottom border for better contrast */
-    background-color: #f8f8f8; /* Lighter background for better tab visibility */
-    padding: 5px;
-}
-
-.tab-link {
-    padding: 5px 24px;
-    cursor: pointer;
-    border: 2px solid transparent; /* Avoid default border while inactive */
-    border-bottom: none;
-    background-color: #ddd;
-    margin-right: 5px;
-    border-radius: 8px 8px 0 0; /* Rounded top edges for tab shape */
-/*    font-weight: bold;*/
-    transition: background-color 0.3s, color 0.3s, border 0.3s;
-    text-decoration: none; /* Removes underline */
-    color: #11558f; /* Dark gray text */
-}
-
-.tab-link:hover {
-    background-color: #cfcfcf; /* Subtle hover effect */
-    color: black; /* Darker text on hover */
-}
-
-.tab-link.active {
-    background-color: #11558f;
-    color: white;
-    border-color: #11558f; /* Give the active tab a strong border */
-    border-bottom: 2px solid white; /* Create illusion of merging with content */
-    font-weight: bold;
-}
-
-.content-container {
-    background-color: #ececec;
-    padding: 10px;
-    border: 2px solid #11558f;
-    border-top: none;
-    border-radius: 0 0 8px 8px; /* Rounded bottom corners */
-    min-height: 200px; /* Ensure content area is visible */
-}
-
-.center-area {
-    min-height: 500px;
-    position: relative;
-}
-
-.ui-tabs-panel.ui-widget-content {
-    display: block !important;
-    padding: 15px;
-    background: white;
-}
-
-.ui-tabs .ui-tabs-panel {
-    display: block !important;
-}
-
-
-/*new tabs*/
-/* Updated date range controls */
-.date-range-controls {
-    display: flex;
-    gap: 15px;
-    align-items: center; /* Changed from flex-end to center for better alignment */
-    margin-bottom: 20px;
-}
-
-.date-picker {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    max-width: 200px;
-}
-
-.date-picker label {
-    margin-bottom: 0; /* Remove bottom margin */
-    font-weight: bold;
-    white-space: nowrap; /* Prevent label from wrapping */
-}
-
-/* Updated week tabs styling */
-/* Replace the existing .week-tabs styles with these: */
-.week-tabs {
+/* Sales Order Panel Tab Styles */
+.sales-order-content {
     margin: 0;
     padding: 0;
 }
 
-.week-tabs > ul {
+.tab-navigation {
+    margin-bottom: 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.tab-navigation .nav-tabs {
+    border-bottom: none;
+    margin-bottom: 0;
     display: flex;
+    flex-wrap: wrap;
     list-style: none;
-    padding: 0;
-    margin: 0;
-    border-bottom: 2px solid #11558f;
-    background-color: #f8f8f8;
-    padding-left: 15px;
+    padding-left: 0;
 }
 
-.week-tabs > ul > li {
-    padding: 8px 20px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    border-bottom: none;
-    background-color: #ddd;
-    margin-right: 5px;
-    border-radius: 8px 8px 0 0;
-    transition: all 0.3s ease;
-    color: #11558f;
+.tab-navigation .nav-item {
+    margin-bottom: -1px;
 }
 
-.week-tabs > ul > li:hover {
-    background-color: #cfcfcf;
-    color: black;
+.tab-navigation .nav-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    margin-right: 0.125rem;
+    color: #495057;
+    text-decoration: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
 }
 
-.week-tabs > ul > li.active {
-    background-color: #11558f;
-    color: white;
-    border-color: #11558f;
-    border-bottom: 2px solid white;
-    font-weight: bold;
+.tab-navigation .nav-link:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #dee2e6 #dee2e6 #fff;
 }
 
-.week-tabs .tab-content {
-    padding: 15px;
-    border: 2px solid #11558f;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    min-height: 200px;
-    background: white;
+.tab-navigation .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    position: relative;
+    z-index: 1;
 }
 
-/* Keep existing styles for other elements */
-.date-range-container {
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 5px;
-    margin-bottom: 20px;
+.tab-content {
+    padding: 1rem 0;
+    background-color: #fff;
 }
 
-.apply-button {
-    height: 38px;
-    margin-bottom: 1px;
+.tab-pane {
+    display: block;
+}
+
+.sales-order-table {
+    margin-top: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tab-navigation .nav-tabs {
+        flex-direction: column;
+    }
+
+    .tab-navigation .nav-item {
+        margin-bottom: 0;
+        margin-right: 0;
+    }
+
+    .tab-navigation .nav-link {
+        margin-right: 0;
+        border-radius: 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .tab-navigation .nav-link.active {
+        border-color: #dee2e6;
+        background-color: #f8f9fa;
+    }
 }

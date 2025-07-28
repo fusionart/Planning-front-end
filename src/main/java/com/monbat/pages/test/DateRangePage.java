@@ -12,8 +12,10 @@ import com.monbat.services.api.SalesOrderApiClient;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
@@ -35,6 +37,8 @@ public class DateRangePage extends Panel {
     private final List<WeekTab> tabs = new ArrayList<>();
     private LocalDate startDateFilter;
     private LocalDate endDateFilter;
+    private final WebMarkupContainer loadingContainer;
+    private final Label loadingMessage;
 
     public DateRangePage(String id) {
         super(id);
@@ -54,10 +58,33 @@ public class DateRangePage extends Panel {
         form.add(startDatePicker);
         form.add(endDatePicker);
 
+        // Loading message components
+        loadingContainer = new WebMarkupContainer("loadingContainer");
+        loadingContainer.setOutputMarkupId(true);
+        loadingContainer.setVisible(false);
+
+        loadingMessage = new Label("loadingMessage", Model.of("Loading data..."));
+        loadingMessage.setOutputMarkupId(true);
+        loadingContainer.add(loadingMessage);
+
+        add(loadingContainer);
+
         form.add(new AjaxButton("apply") {
             @Override
             protected void onSubmit(AjaxRequestTarget target) {
+                // Show loading message
+                loadingContainer.setVisible(true);
+                loadingMessage.setDefaultModelObject("Loading order data...");
+                target.add(loadingContainer);
+
+                // Load data immediately (no need for setTimeout)
                 loadOrderData(target);
+            }
+
+            @Override
+            protected void onError(AjaxRequestTarget target) {
+                loadingMessage.setDefaultModelObject("Error occurred during form submission");
+                target.add(loadingMessage);
             }
         });
 
@@ -91,20 +118,40 @@ public class DateRangePage extends Panel {
 
     private void loadOrderData(AjaxRequestTarget target) {
         try {
+            // Update loading message
+            loadingMessage.setDefaultModelObject("Fetching sales orders...");
+            target.add(loadingMessage);
+
             // Fetch data from APIs
             List<SalesOrder> salesOrders = SalesOrderApiClient.getData(startDateFilter, endDateFilter);
+
+            loadingMessage.setDefaultModelObject("Fetching planned orders...");
+            target.add(loadingMessage);
             List<PlannedOrder> plannedOrders = PlannedOrderApiClient.getData(startDateFilter, endDateFilter);
+
+            loadingMessage.setDefaultModelObject("Fetching production orders...");
+            target.add(loadingMessage);
             List<ProductionOrder> productionOrders = ProductionOrderApiClient.getData(startDateFilter, endDateFilter);
 
             if (!salesOrders.isEmpty()) {
+                loadingMessage.setDefaultModelObject("Creating tabs...");
+                target.add(loadingMessage);
                 updateTabs(salesOrders, plannedOrders, productionOrders);
+
+                // Hide loading message when done
+                loadingContainer.setVisible(false);
+                target.add(loadingContainer);
                 target.add(tabbedPanel);
             } else {
                 tabs.clear();
+                loadingMessage.setDefaultModelObject("No orders found for the selected date range.");
+                target.add(loadingMessage);
                 info("No orders found for the selected date range.");
             }
         } catch (Exception e) {
             LOG.error("Error loading order data", e);
+            loadingMessage.setDefaultModelObject("Failed to load data: " + e.getMessage());
+            target.add(loadingMessage);
             error("Failed to load data: " + e.getMessage());
         }
     }
@@ -169,7 +216,7 @@ public class DateRangePage extends Panel {
                 new PropertyModel<>(this, "endDateFilter"), "dd.MM.yyyy", options);
     }
 
-    private static class WeekTab implements org.apache.wicket.extensions.markup.html.tabs.ITab {
+    private static class WeekTab implements ITab {
         private final String week;
         private final List<SalesOrder> salesOrders;
         private final List<PlannedOrder> plannedOrders;
