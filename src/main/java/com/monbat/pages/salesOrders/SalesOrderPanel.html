@@ -1,19 +1,19 @@
 <wicket:panel>
-    <div class="sales-order-panel">
-        <!-- Modern Tab Navigation -->
-        <div class="modern-tabs-container">
-            <ul class="modern-tabs-nav" wicket:id="tabList">
-                <li class="modern-tab-item">
-                    <a class="modern-tab-link" wicket:id="tabLink">
+    <div class="sales-order-content">
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <ul class="nav nav-tabs" wicket:id="tabList">
+                <li class="nav-item">
+                    <a class="nav-link" wicket:id="tabLink">
                         <span wicket:id="tabTitle">Tab Title</span>
                     </a>
                 </li>
             </ul>
         </div>
 
-        <!-- Tab Content Area -->
-        <div class="modern-tab-content">
-            <div class="modern-tab-pane" wicket:id="activeTabContent"></div>
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <div class="tab-pane active" wicket:id="activeTabContent"></div>
         </div>
     </div>
 </wicket:panel>
