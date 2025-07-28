@@ -4,98 +4,14 @@
     </div>
 
     <form wicket:id="form">
-        <!-- Single line date range controls -->
-        <div class="date-range-row">
-            <div class="date-field">
-                <label for="startDate">From:</label>
-                <input type="text" wicket:id="startDatePicker" id="startDate" placeholder="dd.mm.yyyy" />
-            </div>
-            <div class="date-field">
-                <label for="endDate">To:</label>
-                <input type="text" wicket:id="endDatePicker" id="endDate" placeholder="dd.mm.yyyy" />
-            </div>
-            <div class="apply-button">
-                <button wicket:id="applyDateRangeButton" class="btn btn-primary">Apply</button>
-            </div>
+        <div>
+            <input type="text" wicket:id="startDatePicker" placeholder="dd.mm.yyyy" />
+            <input type="text" wicket:id="endDatePicker" placeholder="dd.mm.yyyy" />
+            <button wicket:id="applyDateRangeButton">Apply</button>
         </div>
 
         <div wicket:id="feedback"></div>
         <div wicket:id="tabs"></div>
     </form>
-
-    <style>
-        .date-range-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            border: 1px solid #dee2e6;
-        }
-
-        .date-field {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .date-field label {
-            font-weight: 500;
-            color: #495057;
-            margin: 0;
-            white-space: nowrap;
-        }
-
-        .date-field input {
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 14px;
-            width: 120px;
-        }
-
-        .date-field input:focus {
-            border-color: #80bdff;
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
-
-        .apply-button .btn {
-            padding: 8px 20px;
-            font-size: 14px;
-            border-radius: 4px;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #004085;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .date-range-row {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-            }
-
-            .date-field {
-                justify-content: space-between;
-            }
-
-            .date-field input {
-                width: auto;
-                flex: 1;
-                max-width: 150px;
-            }
-        }
-    </style>
 </wicket:panel>
+

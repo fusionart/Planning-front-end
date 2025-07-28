@@ -8,6 +8,7 @@ import com.googlecode.wicket.jquery.ui.widget.tabs.TabbedPanel;
 import com.monbat.models.dto.sap.PlannedOrder;
 import com.monbat.models.dto.sap.ProductionOrder;
 import com.monbat.models.dto.sap.sales_order.SalesOrder;
+import com.monbat.models.entities.TabData;
 import com.monbat.services.api.PlannedOrderApiClient;
 import com.monbat.services.api.ProductionOrderApiClient;
 import com.monbat.services.api.SalesOrderApiClient;
@@ -32,8 +33,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -78,14 +79,14 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         loadingLabel.setOutputMarkupId(true);
         loadingContainer.add(loadingLabel);
 
-        // Form with inline date range controls
+        // Form
         Form<Void> form = new Form<>("form");
         form.setOutputMarkupId(true);
         add(form);
 
-        // Date Pickers with default values
-        startDateFilter = LocalDate.now().minusMonths(1);
-        endDateFilter = LocalDate.now();
+        // Date Pickers
+        startDateFilter = LocalDate.now().minusMonths(1); // Default start date
+        endDateFilter = LocalDate.now(); // Default end date
 
         DatePicker startDatePicker = getStartDatePicker();
         form.add(startDatePicker);
@@ -111,6 +112,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         };
         form.add(applyDateRangeButton);
 
+
         // Feedback Panel
         feedback = new JQueryFeedbackPanel("feedback");
         feedback.setOutputMarkupId(true);
@@ -122,6 +124,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         options.set("active", 0);
 
         tabbedPanel = new TabbedPanel("tabs", new TabListModel() {
+
             @Override
             protected List<ITab> load() {
                 return new ArrayList<>();
@@ -143,7 +146,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
     private DatePicker getStartDatePicker() {
         Options options = new Options();
-        options.set("dateFormat", "'dd.mm.yy'");
+        options.set("dateFormat", "'dd.mm.yy'"); // Note the quotes around the format
         options.set("firstDay", 1);
         options.set("changeMonth", true);
         options.set("changeYear", true);
@@ -156,7 +159,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
     private DatePicker getEndDatePicker() {
         Options options = new Options();
-        options.set("dateFormat", "'dd.mm.yy'");
+        options.set("dateFormat", "'dd.mm.yy'"); // Note the quotes around the format
         options.set("firstDay", 1);
         options.set("changeMonth", true);
         options.set("changeYear", true);
@@ -168,9 +171,9 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
     }
 
     private void loadSalesOrderData(AjaxRequestTarget target) {
-        loadingContainer.setVisible(true);
+        loadingContainer.setVisible(true); // Show loading indicator
         loadingLabel.setDefaultModelObject("Loading sales order from SAP ...");
-        target.add(loadingContainer, feedback);
+        target.add(loadingContainer, feedback); // Update loading status immediately
 
         try {
             List<SalesOrder> salesOrderList = SalesOrderApiClient.getData(startDateFilter, endDateFilter);
@@ -179,12 +182,12 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
             if (!salesOrderList.isEmpty()) {
                 loadingContainer.setVisible(false);
-                updateTabsWithData(salesOrderList, target);
+                updateTabsWithData(salesOrderList, target); // This method now correctly updates the form which contains the new tabbed panel
             } else {
                 loadingContainer.setVisible(false);
-                tabbedPanel.setVisible(false);
+                tabbedPanel.setVisible(false); // Hide tabs if no data
                 info("No sales orders found for the selected date range.");
-                target.add(tabbedPanel, feedback);
+                target.add(tabbedPanel, feedback); // Add tabbedPanel and feedback to target if no data
             }
         } catch (Exception e) {
             LOG.error("Error loading sales order data", e);
@@ -192,31 +195,27 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
             target.add(feedback);
         } finally {
             loadingContainer.setVisible(false);
-            target.add(loadingContainer);
+            target.add(loadingContainer); // Always ensure loading container is hidden
         }
+        // Removed the problematic target.add(tabbedPanel, loadingContainer, feedback); line here.
+        // The updateTabsWithData method already handles adding the 'form' to the target,
+        // which now contains the newly created and visible tabbedPanel.
     }
 
     private void updateTabsWithData(List<SalesOrder> allItems, AjaxRequestTarget target) {
         List<String> distinctWeeks = getDistinctWeeks(allItems);
 
-        // Create week-based tabs
-        List<ITab> tabs = new ArrayList<>();
-
-        for (String week : distinctWeeks) {
+        List<TabData<List<SalesOrder>>> tabDataList = new ArrayList<>();
+        for (String week : distinctWeeks){
             List<SalesOrder> filteredSalesOrders = allItems.stream()
                     .filter(order -> week.equals(order.getRequestedDeliveryWeek()))
-                    .collect(Collectors.toList());
-
-            tabs.add(new AbstractTab(Model.of("Week " + week)) {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public WebMarkupContainer getPanel(String panelId) {
-                    // Use the new WeekSalesOrderPanel
-                    return new WeekSalesOrderPanel(panelId, filteredSalesOrders, plannedOrderList, productionOrderList);
-                }
-            });
+                    .toList();
+            loadingLabel = new Label("loadingLabel", Model.of(week));
+            tabDataList.add(new TabData<>("Week " + week, Collections.singletonList(filteredSalesOrders)));
         }
+
+        // Create new tabs and update the model
+        List<ITab> tabs = createTabsFromData(tabDataList);
 
         // Replace the existing tabbedPanel with a new one
         Form<?> form = (Form<?>) tabbedPanel.getParent();
@@ -227,7 +226,6 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         options.set("active", 0);
 
         tabbedPanel = new TabbedPanel("tabs", tabs, options) {
-            private static final long serialVersionUID = 1L;
 
             @Override
             public void onActivate(AjaxRequestTarget target, int index, ITab tab) {
@@ -237,11 +235,29 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         };
 
         tabbedPanel.setOutputMarkupId(true);
-        tabbedPanel.setVisible(true);
-        form.add(tabbedPanel);
+        tabbedPanel.setVisible(true); // Ensure the new panel is visible
+        form.add(tabbedPanel); // Add the new panel to the form
 
         info("Loaded " + tabs.size() + " delivery weeks");
-        target.add(form);
+        target.add(form); // Update the entire form to ensure the new tabbedPanel is rendered
+    }
+
+    private List<ITab> createTabsFromData(List<TabData<List<SalesOrder>>> tabDataList) {
+        List<ITab> tabs = new ArrayList<>();
+
+        for (TabData<List<SalesOrder>> tabData : tabDataList) {
+            final List<SalesOrder> contentModel = tabData.getContent().get(0);
+
+            tabs.add(new AbstractTab(Model.of(tabData.getTitle())) {
+
+                @Override
+                public WebMarkupContainer getPanel(String panelId) {
+                    return new SalesOrderPanel(panelId, contentModel, plannedOrderList, productionOrderList);
+                }
+            });
+        }
+
+        return tabs;
     }
 
     private List<String> getDistinctWeeks(List<SalesOrder> salesOrders) {
@@ -249,6 +265,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
                 .map(SalesOrder::getRequestedDeliveryWeek)
                 .distinct()
                 .sorted((week1, week2) -> {
+                    // Parse week and year from the strings
                     String[] parts1 = week1.split("/");
                     String[] parts2 = week2.split("/");
 
@@ -258,14 +275,13 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
                     int weekNum2 = Integer.parseInt(parts2[0]);
                     int year2 = Integer.parseInt(parts2[1]);
 
+                    // First compare by year, then by week number
                     if (year1 != year2) {
                         return Integer.compare(year1, year2);
                     } else {
                         return Integer.compare(weekNum1, weekNum2);
                     }
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
-
-
 }
