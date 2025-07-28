@@ -50,7 +50,7 @@ public class SalesOrderPanel extends Panel implements Serializable {
         this.productionOrderList = productionOrderList;
         this.tabs = createTabs();
 
-        // Create tab navigation
+        // Create tab navigation with modern styling
         ListView<TabInfo> tabList = new ListView<TabInfo>("tabList", tabs) {
             @Override
             protected void populateItem(ListItem<TabInfo> item) {
@@ -65,14 +65,18 @@ public class SalesOrderPanel extends Panel implements Serializable {
                     }
                 };
 
+                // Apply modern CSS classes
+                item.add(new AttributeModifier("class", "modern-tab-item"));
+
                 // Add active class if this is the active tab
                 if (tabIndex == activeTabIndex) {
-                    tabLink.add(new AttributeModifier("class", "nav-link active"));
+                    tabLink.add(new AttributeModifier("class", "modern-tab-link active"));
                 } else {
-                    tabLink.add(new AttributeModifier("class", "nav-link"));
+                    tabLink.add(new AttributeModifier("class", "modern-tab-link"));
                 }
 
-                tabLink.add(new Label("tabTitle", tab.getTitle()));
+                Label tabTitle = new Label("tabTitle", tab.getTitle());
+                tabLink.add(tabTitle);
                 item.add(tabLink);
             }
         };
