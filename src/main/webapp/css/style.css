@@ -1,93 +1,112 @@
 /* styles.css */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
     overflow: hidden; /* Remove the right scrollbar */
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
 }
 
 .menu-bar {
     width: 200px;
-    background-color: #f4f4f4;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
     float: left;
-    padding: 10px;
+    padding: 20px;
     height: 100vh;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    border-right: 1px solid #e9ecef;
 }
 
 .menu-bar ul {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    width: 200px;
-    background-color: #f1f1f1;
+    width: 100%;
+    background: transparent;
 }
 
 .menu-bar ul li {
-    margin: 10px 0;
+    margin: 8px 0;
 }
 
 .menu-bar li a {
     display: block;
-    color: #000;
-    padding: 8px 16px;
+    color: #495057;
+    padding: 12px 20px;
     text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
 }
 
 /* Change the link color on hover */
 .menu-bar li a:hover {
-    background-color: #555;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(102,126,234,0.3);
 }
 
 .center-area {
-    margin-left: 220px; /* Leave space for the menu bar */
-    padding: 20px;
-    margin-top: 40px; /* Adjust this value to prevent overlap with nav and header */
+    margin-left: 240px; /* Leave space for the menu bar */
+    padding: 30px;
+    margin-top: 120px; /* Adjust this value to prevent overlap with nav and header */
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    margin-right: 20px;
+    margin-bottom: 100px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
 }
 
 footer {
-    background-color: #333;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
     text-align: center;
-    padding: 10px;
+    padding: 20px;
     position: fixed;
     bottom: 0;
     width: 100%;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 header {
-    background-color: #8c8c8c;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 10px;
+    padding: 20px;
     text-align: center;
     position: fixed;
     width: 100%;
     top: 0;
     z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
 }
 
 nav {
     position: fixed;
     z-index: 99;
     width: 100%;
-    background: #242526;
-    top: 10px; /* Adjust this value based on the height of the header */
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    top: 60px; /* Adjust this value based on the height of the header */
     padding: 0 30px; /* Ensure same margin on the right as on the left */
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
 }
 
 nav .wrapper {
     position: relative;
     max-width: 1300px;
     padding: 0px 30px;
-/*    height: 70px;*/
-    line-height: 70px;
+    line-height: 60px;
     margin: auto;
     display: flex;
     align-items: center;
@@ -98,6 +117,7 @@ nav .wrapper {
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
 }
 
 .nav-links li {
@@ -105,16 +125,59 @@ nav .wrapper {
 }
 
 .nav-links li a {
-    color: #f2f2f2;
+    color: #ffffff;
     text-decoration: none;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 500;
-    padding: 9px 15px;
-    border-radius: 5px;
+    padding: 10px 20px;
+    border-radius: 25px;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .nav-links li a:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+}
+
+.table-container{
+    display: block; /* Ensure it behaves as a block element */
+    height: 650px; /* Adjust based on your needs */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
+    border: 2px solid #e9ecef; /* Optional border for clarity */
+    width: 100%; /* Ensure it takes full width */
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.table-container table {
+    width: 100%; /* Ensure the table fills the container */
+    border-collapse: collapse; /* Prevent unnecessary spacing */
+}
+
+.table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}nav-links li a:hover {
     background-color: #555;
     color: white;
 }
@@ -131,4 +194,88 @@ nav .wrapper {
 .table-container table {
     width: 100%; /* Ensure the table fills the container */
     border-collapse: collapse; /* Prevent unnecessary spacing */
+}
+
+/* Date Range Form Styling */
+.date-range-container {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.date-range-controls {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.date-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.date-picker label {
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+    white-space: nowrap;
+    font-size: 1.1rem;
+}
+
+.date-picker input {
+    min-width: 140px;
+    padding: 0.75rem 1rem;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.9);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.date-picker input:focus {
+    outline: none;
+    border-color: #ffffff;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
+.apply-button {
+    margin-left: auto;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+}
+
+.apply-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,107,107,0.6);
+    background: linear-gradient(45deg, #FF5252, #FF7043);
+}
+
+@media (max-width: 768px) {
+    .date-range-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+    }
+
+    .date-picker {
+        justify-content: space-between;
+    }
+
+    .apply-button {
+        margin-left: 0;
+        align-self: center;
+    }
 }

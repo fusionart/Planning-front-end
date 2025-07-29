@@ -3,12 +3,9 @@ package com.monbat.pages.salesOrders;
 import com.googlecode.wicket.jquery.core.Options;
 import com.googlecode.wicket.jquery.ui.form.datepicker.DatePicker;
 import com.googlecode.wicket.jquery.ui.panel.JQueryFeedbackPanel;
-import com.googlecode.wicket.jquery.ui.widget.tabs.TabListModel;
-import com.googlecode.wicket.jquery.ui.widget.tabs.TabbedPanel;
 import com.monbat.models.dto.sap.PlannedOrder;
 import com.monbat.models.dto.sap.ProductionOrder;
 import com.monbat.models.dto.sap.sales_order.SalesOrder;
-import com.monbat.models.entities.TabData;
 import com.monbat.services.api.PlannedOrderApiClient;
 import com.monbat.services.api.ProductionOrderApiClient;
 import com.monbat.services.api.SalesOrderApiClient;
@@ -18,6 +15,7 @@ import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.extensions.markup.html.tabs.AbstractTab;
 import org.apache.wicket.extensions.markup.html.tabs.ITab;
+import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -33,8 +31,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -42,7 +40,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
     private final WebMarkupContainer loadingContainer;
     private Label loadingLabel;
-    private TabbedPanel tabbedPanel;
+    private TabbedPanel<ITab> tabbedPanel;
     private FeedbackPanel feedback;
 
     private LocalDate startDateFilter;
@@ -58,8 +56,15 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         add(new Behavior() {
             @Override
             public void renderHead(Component component, IHeaderResponse response) {
+                // Add custom CSS for proper tab styling
                 response.render(OnDomReadyHeaderItem.forScript(
-                        "const problematicTables = [];" +
+                        "// Ensure tabs are properly styled" +
+                                "$('.tabpanel').addClass('nav nav-tabs');" +
+                                "$('.tabpanel li').addClass('nav-item');" +
+                                "$('.tabpanel li a').addClass('nav-link');" +
+                                "$('.tabpanel li.selected a').addClass('active');" +
+
+                                "const problematicTables = [];" +
                                 "document.querySelectorAll('.table').forEach(table => {" +
                                 "   if(table.offsetWidth === 0 || table.offsetHeight === 0) {" +
                                 "       problematicTables.push(table.id);" +
@@ -112,30 +117,28 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         };
         form.add(applyDateRangeButton);
 
-
         // Feedback Panel
         feedback = new JQueryFeedbackPanel("feedback");
         feedback.setOutputMarkupId(true);
         form.add(feedback);
 
-        // Initialize TabbedPanel with empty model
-        Options options = new Options();
-        options.set("collapsible", false);
-        options.set("active", 0);
-
-        tabbedPanel = new TabbedPanel("tabs", new TabListModel() {
-
-            @Override
-            protected List<ITab> load() {
-                return new ArrayList<>();
-            }
-        }, options) {
+        // Initialize TabbedPanel with empty tabs - use standard Wicket TabbedPanel with proper CSS
+        tabbedPanel = new TabbedPanel<ITab>("tabs", new ArrayList<>()) {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public void onActivate(AjaxRequestTarget target, int index, ITab tab) {
-                info("Selected tab #" + index + ": " + tab.getTitle());
-                target.add(feedback);
+            protected String getTabContainerCssClass() {
+                return "nav nav-tabs"; // Bootstrap tab classes
+            }
+
+            @Override
+            protected String getSelectedTabCssClass() {
+                return "nav-link active";
+            }
+
+            @Override
+            protected String getLastTabCssClass() {
+                return "nav-link";
             }
         };
 
@@ -182,12 +185,12 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
             if (!salesOrderList.isEmpty()) {
                 loadingContainer.setVisible(false);
-                updateTabsWithData(salesOrderList, target); // This method now correctly updates the form which contains the new tabbed panel
+                updateTabsWithData(salesOrderList, target);
             } else {
                 loadingContainer.setVisible(false);
                 tabbedPanel.setVisible(false); // Hide tabs if no data
                 info("No sales orders found for the selected date range.");
-                target.add(tabbedPanel, feedback); // Add tabbedPanel and feedback to target if no data
+                target.add(tabbedPanel, feedback);
             }
         } catch (Exception e) {
             LOG.error("Error loading sales order data", e);
@@ -195,42 +198,44 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
             target.add(feedback);
         } finally {
             loadingContainer.setVisible(false);
-            target.add(loadingContainer); // Always ensure loading container is hidden
+            target.add(loadingContainer);
         }
-        // Removed the problematic target.add(tabbedPanel, loadingContainer, feedback); line here.
-        // The updateTabsWithData method already handles adding the 'form' to the target,
-        // which now contains the newly created and visible tabbedPanel.
     }
 
     private void updateTabsWithData(List<SalesOrder> allItems, AjaxRequestTarget target) {
         List<String> distinctWeeks = getDistinctWeeks(allItems);
 
-        List<TabData<List<SalesOrder>>> tabDataList = new ArrayList<>();
-        for (String week : distinctWeeks){
-            List<SalesOrder> filteredSalesOrders = allItems.stream()
-                    .filter(order -> week.equals(order.getRequestedDeliveryWeek()))
-                    .toList();
-            loadingLabel = new Label("loadingLabel", Model.of(week));
-            tabDataList.add(new TabData<>("Week " + week, Collections.singletonList(filteredSalesOrders)));
-        }
-
-        // Create new tabs and update the model
-        List<ITab> tabs = createTabsFromData(tabDataList);
+        // Create new tabs
+        List<ITab> tabs = createTabsFromWeeks(distinctWeeks, allItems);
 
         // Replace the existing tabbedPanel with a new one
         Form<?> form = (Form<?>) tabbedPanel.getParent();
         form.remove(tabbedPanel);
 
-        Options options = new Options();
-        options.set("collapsible", false);
-        options.set("active", 0);
-
-        tabbedPanel = new TabbedPanel("tabs", tabs, options) {
+        // Use standard Wicket TabbedPanel for proper tab styling with Bootstrap classes
+        tabbedPanel = new TabbedPanel<ITab>("tabs", tabs) {
+            private static final long serialVersionUID = 1L;
 
             @Override
-            public void onActivate(AjaxRequestTarget target, int index, ITab tab) {
-                info("Selected tab # " + index + ": " + tab.getTitle());
-                target.add(feedback);
+            protected String getTabContainerCssClass() {
+                return "nav nav-tabs"; // Bootstrap tab classes
+            }
+
+            @Override
+            protected String getSelectedTabCssClass() {
+                return "nav-link active";
+            }
+
+            @Override
+            protected String getLastTabCssClass() {
+                return "nav-link";
+            }
+
+            @Override
+            protected WebMarkupContainer newTabsContainer(final String id) {
+                WebMarkupContainer container = super.newTabsContainer(id);
+                container.add(new org.apache.wicket.AttributeModifier("class", "nav nav-tabs"));
+                return container;
             }
         };
 
@@ -242,17 +247,20 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         target.add(form); // Update the entire form to ensure the new tabbedPanel is rendered
     }
 
-    private List<ITab> createTabsFromData(List<TabData<List<SalesOrder>>> tabDataList) {
+    private List<ITab> createTabsFromWeeks(List<String> distinctWeeks, List<SalesOrder> allItems) {
         List<ITab> tabs = new ArrayList<>();
 
-        for (TabData<List<SalesOrder>> tabData : tabDataList) {
-            final List<SalesOrder> contentModel = tabData.getContent().get(0);
+        for (String week : distinctWeeks) {
+            final List<SalesOrder> filteredSalesOrders = allItems.stream()
+                    .filter(order -> week.equals(order.getRequestedDeliveryWeek()))
+                    .collect(Collectors.toList());
 
-            tabs.add(new AbstractTab(Model.of(tabData.getTitle())) {
+            tabs.add(new AbstractTab(Model.of("Week " + week)) {
+                private static final long serialVersionUID = 1L;
 
                 @Override
                 public WebMarkupContainer getPanel(String panelId) {
-                    return new SalesOrderPanel(panelId, contentModel, plannedOrderList, productionOrderList);
+                    return new SalesOrderPanel(panelId, filteredSalesOrders, plannedOrderList, productionOrderList);
                 }
             });
         }
@@ -282,6 +290,6 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
                         return Integer.compare(weekNum1, weekNum2);
                     }
                 })
-                .toList();
+                .collect(Collectors.toList());
     }
 }

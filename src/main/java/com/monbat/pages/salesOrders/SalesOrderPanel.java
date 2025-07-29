@@ -1,7 +1,6 @@
 package com.monbat.pages.salesOrders;
 
 import com.monbat.components.genericTable.ColumnDefinition;
-import com.monbat.components.genericTable.GenericDataTablePanel;
 import com.monbat.components.genericTable.PropertyColumnDefinition;
 import com.monbat.models.dto.sap.PlannedOrder;
 import com.monbat.models.dto.sap.ProductionOrder;
@@ -15,14 +14,13 @@ import com.monbat.services.api.MaterialStockApiClient;
 import com.monbat.utils.CustomDictionary;
 import com.monbat.utils.enums.TableNames;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.list.ListItem;
-import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.extensions.markup.html.tabs.AbstractTab;
+import org.apache.wicket.extensions.markup.html.tabs.ITab;
+import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.Model;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -38,8 +36,6 @@ public class SalesOrderPanel extends Panel implements Serializable {
     private final List<SalesOrder> salesOrders;
     private final List<PlannedOrder> plannedOrderList;
     private final List<ProductionOrder> productionOrderList;
-    private final List<TabInfo> tabs;
-    private int activeTabIndex = 0;
 
     public SalesOrderPanel(String id, List<SalesOrder> items, List<PlannedOrder> plannedOrderList, List<ProductionOrder> productionOrderList) {
         super(id);
@@ -48,69 +44,15 @@ public class SalesOrderPanel extends Panel implements Serializable {
         this.salesOrders = items;
         this.plannedOrderList = plannedOrderList;
         this.productionOrderList = productionOrderList;
-        this.tabs = createTabs();
 
-        // Create tab navigation
-        ListView<TabInfo> tabList = new ListView<TabInfo>("tabList", tabs) {
-            @Override
-            protected void populateItem(ListItem<TabInfo> item) {
-                TabInfo tab = item.getModelObject();
-                int tabIndex = item.getIndex();
-
-                AjaxLink<Void> tabLink = new AjaxLink<Void>("tabLink") {
-                    @Override
-                    public void onClick(AjaxRequestTarget target) {
-                        activeTabIndex = tabIndex;
-                        target.add(SalesOrderPanel.this);
-                    }
-                };
-
-                // Add active class if this is the active tab
-                if (tabIndex == activeTabIndex) {
-                    tabLink.add(new AttributeModifier("class", "nav-link active"));
-                } else {
-                    tabLink.add(new AttributeModifier("class", "nav-link"));
-                }
-
-                tabLink.add(new Label("tabTitle", tab.getTitle()));
-                item.add(tabLink);
-            }
-        };
-        add(tabList);
-
-        // Create active tab content
-        createActiveTabContent();
+        // Create tabs using Wicket's standard TabbedPanel
+        final TabbedPanel<ITab> tabs = new TabbedPanel<>("tabs", createTabs());
+        tabs.setOutputMarkupId(true);
+        add(tabs);
     }
 
-    private void createActiveTabContent() {
-        TabInfo activeTab = tabs.get(activeTabIndex);
-        IModel<Collection<SalesOrderMain>> model = () -> generateSalesOrderMainData(
-                activeTab.getSalesOrders(), plannedOrderList, productionOrderList);
-
-        // Create columns dynamically
-        List<ColumnDefinition<SalesOrderMain>> columns = createDynamicColumns();
-
-        // Create filter function
-        Function<SalesOrderMain, List<String>> filterFunction = createSerializableFilterFunction();
-
-        GenericDataTablePanel<SalesOrderMain> dataTablePanel = new GenericDataTablePanel<>(
-                "activeTabContent",
-                model,
-                columns,
-                filterFunction
-        );
-
-        // Remove existing content if any
-        if (get("activeTabContent") != null) {
-            remove("activeTabContent");
-        }
-
-        dataTablePanel.setOutputMarkupId(true);
-        add(dataTablePanel);
-    }
-
-    private List<TabInfo> createTabs() {
-        List<TabInfo> tabList = new ArrayList<>();
+    private List<ITab> createTabs() {
+        List<ITab> tabs = new ArrayList<>();
 
         // Group sales orders by plant or another meaningful criteria
         Map<String, List<SalesOrder>> groupedOrders = salesOrders.stream()
@@ -118,15 +60,48 @@ public class SalesOrderPanel extends Panel implements Serializable {
 
         // If no meaningful grouping, create a single "All Orders" tab
         if (groupedOrders.size() <= 1) {
-            tabList.add(new TabInfo("All Orders", salesOrders));
+            tabs.add(createTab("All Orders", salesOrders));
         } else {
             // Create tabs for each group
             for (Map.Entry<String, List<SalesOrder>> entry : groupedOrders.entrySet()) {
-                tabList.add(new TabInfo(entry.getKey(), entry.getValue()));
+                tabs.add(createTab(entry.getKey(), entry.getValue()));
             }
         }
 
-        return tabList;
+        return tabs;
+    }
+
+    private ITab createTab(String title, List<SalesOrder> salesOrdersForTab) {
+        return new AbstractTab(Model.of(title)) {
+            @Serial
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public WebMarkupContainer getPanel(String panelId) {
+                return createTabContentPanel(panelId, salesOrdersForTab);
+            }
+        };
+    }
+
+    private Panel createTabContentPanel(String panelId, List<SalesOrder> salesOrdersForTab) {
+        IModel<Collection<SalesOrderMain>> model = () -> generateSalesOrderMainData(
+                salesOrdersForTab, plannedOrderList, productionOrderList);
+
+        // Create columns dynamically
+        List<ColumnDefinition<SalesOrderMain>> columns = createDynamicColumns();
+
+        // Create filter function
+        Function<SalesOrderMain, List<String>> filterFunction = createSerializableFilterFunction();
+
+        return new  SalesOrderTabContentPanel(
+                panelId,
+                salesOrdersForTab,
+                plannedOrderList,
+                productionOrderList,
+                model,
+                columns,
+                filterFunction
+        );
     }
 
     private String getPlantName(SalesOrder order) {
@@ -278,36 +253,8 @@ public class SalesOrderPanel extends Panel implements Serializable {
         };
     }
 
-    @Override
-    protected void onBeforeRender() {
-        super.onBeforeRender();
-        createActiveTabContent();
-    }
-
     private static abstract class SerializableFunction<T, R> implements Function<T, R>, Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
-    }
-
-    // Inner class to represent tab information
-    private static class TabInfo implements Serializable {
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        private final String title;
-        private final List<SalesOrder> salesOrders;
-
-        public TabInfo(String title, List<SalesOrder> salesOrders) {
-            this.title = title;
-            this.salesOrders = salesOrders;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public List<SalesOrder> getSalesOrders() {
-            return salesOrders;
-        }
     }
 }

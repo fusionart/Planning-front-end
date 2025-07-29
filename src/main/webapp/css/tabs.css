@@ -1,12 +1,20 @@
+/* Tab Styles Only */
+
 /* Sales Order Panel Tab Styles */
 .sales-order-content {
     margin: 0;
     padding: 0;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
 .tab-navigation {
     margin-bottom: 0;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 3px solid #f1f3f4;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 0.5rem 1rem 0;
 }
 
 .tab-navigation .nav-tabs {
@@ -16,71 +24,233 @@
     flex-wrap: wrap;
     list-style: none;
     padding-left: 0;
+    gap: 0.25rem;
 }
 
 .tab-navigation .nav-item {
-    margin-bottom: -1px;
+    margin-bottom: -3px;
 }
 
 .tab-navigation .nav-link {
     display: block;
-    padding: 0.5rem 1rem;
-    margin-right: 0.125rem;
-    color: #495057;
+    padding: 1rem 1.5rem;
+    margin-right: 0;
+    color: #6c757d;
     text-decoration: none;
-    background-color: transparent;
-    border: 1px solid transparent;
-    border-top-left-radius: 0.375rem;
-    border-top-right-radius: 0.375rem;
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    background: rgba(255,255,255,0.7);
+    border: 2px solid transparent;
+    border-radius: 10px 10px 0 0;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    position: relative;
+    backdrop-filter: blur(10px);
 }
 
 .tab-navigation .nav-link:hover {
-    color: #0056b3;
-    background-color: #e9ecef;
-    border-color: #dee2e6 #dee2e6 #fff;
+    color: #495057;
+    background: rgba(255,255,255,0.9);
+    border-color: #dee2e6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .tab-navigation .nav-link.active {
-    color: #495057;
-    background-color: #fff;
-    border-color: #dee2e6 #dee2e6 #fff;
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
 }
 
 .tab-content {
-    padding: 1rem 0;
-    background-color: #fff;
+    padding: 2rem;
+    background-color: #ffffff;
 }
 
 .tab-pane {
     display: block;
 }
 
-.sales-order-table {
-    margin-top: 1rem;
+/* Wicket TabbedPanel Specific Styles */
+div.tab-row {
+    border-bottom: 3px solid #f1f3f4;
+    margin-bottom: 0;
+    padding: 0.5rem 1rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-/* Responsive adjustments */
+div.tab-row ul {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    border-bottom: none;
+    gap: 0.25rem;
+}
+
+div.tab-row ul li {
+    margin-bottom: -3px;
+    margin-right: 0;
+}
+
+div.tab-row ul li a {
+    display: block;
+    padding: 1rem 1.5rem;
+    color: #6c757d;
+    text-decoration: none;
+    background: rgba(255,255,255,0.7);
+    border: 2px solid transparent;
+    border-radius: 10px 10px 0 0;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    white-space: nowrap;
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+div.tab-row ul li a:hover {
+    color: #495057;
+    background: rgba(255,255,255,0.9);
+    border-color: #dee2e6;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+div.tab-row ul li.selected a {
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    border-bottom: 3px solid #667eea;
+    margin-bottom: -3px;
+}
+
+div.tab-row ul li.selected a:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    border-color: #5a67d8;
+    box-shadow: 0 8px 25px rgba(90,103,216,0.5);
+}
+
+/* Tab panel content */
+div.tab-panel {
+    padding: 2rem;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 0 0 12px 12px;
+    min-height: 300px;
+}
+
+/* Additional styling for better appearance */
+.tabpanel {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.tabpanel ul {
+    display: flex !important;
+    flex-wrap: wrap;
+    list-style: none !important;
+    padding: 0.5rem 1rem 0 !important;
+    margin: 0 !important;
+    border-bottom: 3px solid #f1f3f4 !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    gap: 0.25rem !important;
+}
+
+.tabpanel ul li {
+    margin-bottom: -3px !important;
+    margin-right: 0 !important;
+}
+
+.tabpanel ul li a {
+    display: block !important;
+    padding: 1rem 1.5rem !important;
+    color: #6c757d !important;
+    text-decoration: none !important;
+    background: rgba(255,255,255,0.7) !important;
+    border: 2px solid transparent !important;
+    border-radius: 10px 10px 0 0 !important;
+    transition: all 0.3s ease !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    position: relative !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.tabpanel ul li a:hover {
+    color: #495057 !important;
+    background: rgba(255,255,255,0.9) !important;
+    border-color: #dee2e6 !important;
+    text-decoration: none !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.tabpanel ul li.selected a,
+.tabpanel ul li.active a {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-color: #667eea !important;
+    position: relative !important;
+    z-index: 2 !important;
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4) !important;
+    border-bottom: 3px solid #667eea !important;
+    margin-bottom: -3px !important;
+}
+
+.tabpanel ul li.selected a:hover,
+.tabpanel ul li.active a:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+    border-color: #5a67d8 !important;
+    box-shadow: 0 8px 25px rgba(90,103,216,0.5) !important;
+}
+
+/* Content area styling */
+.tabpanel .tab-panel {
+    padding: 2rem !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    border-radius: 0 0 12px 12px !important;
+    min-height: 300px !important;
+}
+
+/* Responsive adjustments for tabs */
 @media (max-width: 768px) {
-    .tab-navigation .nav-tabs {
+    .tab-navigation .nav-tabs,
+    .tabpanel ul,
+    div.tab-row ul {
         flex-direction: column;
+        gap: 0.125rem;
     }
 
-    .tab-navigation .nav-item {
+    .tab-navigation .nav-item,
+    .tabpanel ul li,
+    div.tab-row ul li {
         margin-bottom: 0;
         margin-right: 0;
     }
 
-    .tab-navigation .nav-link {
+    .tab-navigation .nav-link,
+    .tabpanel ul li a,
+    div.tab-row ul li a {
         margin-right: 0;
-        border-radius: 0;
-        border-bottom: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 0.125rem;
     }
 
-    .tab-navigation .nav-link.active {
-        border-color: #dee2e6;
-        background-color: #f8f9fa;
+    .tab-navigation .nav-link.active,
+    .tabpanel ul li.selected a,
+    div.tab-row ul li.selected a {
+        border-radius: 8px;
+        margin-bottom: 0.125rem;
     }
 }
