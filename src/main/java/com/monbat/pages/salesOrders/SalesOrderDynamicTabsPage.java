@@ -13,9 +13,6 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.extensions.markup.html.tabs.AbstractTab;
-import org.apache.wicket.extensions.markup.html.tabs.ITab;
-import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -40,8 +37,9 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
     private final WebMarkupContainer loadingContainer;
     private Label loadingLabel;
-    private TabbedPanel<ITab> tabbedPanel;
     private FeedbackPanel feedback;
+    private WebMarkupContainer tableContainer;
+    private SalesOrderPanel salesOrderPanel;
 
     private LocalDate startDateFilter;
     private LocalDate endDateFilter;
@@ -49,6 +47,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
     List<PlannedOrder> plannedOrderList = new ArrayList<>();
     List<ProductionOrder> productionOrderList = new ArrayList<>();
+    List<SalesOrder> allSalesOrderList = new ArrayList<>();
 
     public SalesOrderDynamicTabsPage(String id) {
         super(id);
@@ -56,30 +55,10 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         add(new Behavior() {
             @Override
             public void renderHead(Component component, IHeaderResponse response) {
-                // Add custom CSS for proper tab styling and prevent clicks
+                // Add custom CSS for proper styling
                 response.render(OnDomReadyHeaderItem.forScript(
-                        "// Ensure tabs are properly styled and prevent navigation" +
-                                "$('.tabpanel').addClass('nav nav-tabs');" +
-                                "$('.tabpanel li').addClass('nav-item');" +
-                                "$('.tabpanel li a').addClass('nav-link');" +
-                                "$('.tabpanel li.selected a').addClass('active');" +
-
-                                // Prevent tab clicks from navigating until data is loaded
-                                "$('.tabpanel li a').on('click', function(e) {" +
-                                "   if (!$(this).hasClass('data-loaded')) {" +
-                                "       e.preventDefault();" +
-                                "       e.stopPropagation();" +
-                                "       return false;" +
-                                "   }" +
-                                "});" +
-
-                                "const problematicTables = [];" +
-                                "document.querySelectorAll('.table').forEach(table => {" +
-                                "   if(table.offsetWidth === 0 || table.offsetHeight === 0) {" +
-                                "       problematicTables.push(table.id);" +
-                                "   }" +
-                                "});" +
-                                "console.log('Hidden tables:', problematicTables);"
+                        "// Custom styling for the table container" +
+                                "$('.table-container').css('margin-top', '1rem');"
                 ));
             }
         });
@@ -132,29 +111,11 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         feedback.setOutputMarkupId(true);
         form.add(feedback);
 
-        // Initialize TabbedPanel with empty tabs - initially hidden
-        tabbedPanel = new TabbedPanel<ITab>("tabs", new ArrayList<>()) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            protected String getTabContainerCssClass() {
-                return "nav nav-tabs";
-            }
-
-            @Override
-            protected String getSelectedTabCssClass() {
-                return "nav-link active";
-            }
-
-            @Override
-            protected String getLastTabCssClass() {
-                return "nav-link";
-            }
-        };
-
-        tabbedPanel.setOutputMarkupId(true);
-        tabbedPanel.setVisible(false); // Initially hidden - only show after Apply is clicked
-        form.add(tabbedPanel);
+        // Table Container - initially hidden
+        tableContainer = new WebMarkupContainer("tableContainer");
+        tableContainer.setOutputMarkupId(true);
+        tableContainer.setVisible(false); // Initially hidden
+        form.add(tableContainer);
     }
 
     private DatePicker getStartDatePicker() {
@@ -190,88 +151,39 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         target.add(loadingContainer, feedback);
 
         try {
-            List<SalesOrder> salesOrderList = SalesOrderApiClient.getData(startDateFilter, endDateFilter);
+            allSalesOrderList = SalesOrderApiClient.getData(startDateFilter, endDateFilter);
             plannedOrderList = PlannedOrderApiClient.getData(startDateFilter, endDateFilter);
             productionOrderList = ProductionOrderApiClient.getData(startDateFilter, endDateFilter);
 
-            if (!salesOrderList.isEmpty()) {
-                updateTabsWithData(salesOrderList, target);
-                info("Loaded " + getDistinctWeeks(salesOrderList).size() + " delivery weeks");
+            if (!allSalesOrderList.isEmpty()) {
+                updateTableWithData(target);
+                info("Loaded " + getDistinctWeeks(allSalesOrderList).size() + " delivery weeks");
             } else {
-                tabbedPanel.setVisible(false);
+                tableContainer.setVisible(false);
                 info("No sales orders found for the selected date range.");
             }
         } catch (Exception e) {
             LOG.error("Error loading sales order data", e);
             error("Failed to load sales order data: " + e.getMessage());
-            tabbedPanel.setVisible(false);
+            tableContainer.setVisible(false);
         } finally {
             loadingContainer.setVisible(false);
-            target.add(loadingContainer, feedback, tabbedPanel);
+            target.add(loadingContainer, feedback, tableContainer);
         }
     }
 
-    private void updateTabsWithData(List<SalesOrder> allItems, AjaxRequestTarget target) {
-        List<String> distinctWeeks = getDistinctWeeks(allItems);
-
-        // Create new tabs
-        List<ITab> tabs = createTabsFromWeeks(distinctWeeks, allItems);
-
-        // Replace the existing tabbedPanel with a new one
-        Form<?> form = (Form<?>) tabbedPanel.getParent();
-        form.remove(tabbedPanel);
-
-        // Create new TabbedPanel with data
-        tabbedPanel = new TabbedPanel<ITab>("tabs", tabs) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            protected String getTabContainerCssClass() {
-                return "nav nav-tabs";
-            }
-
-            @Override
-            protected String getSelectedTabCssClass() {
-                return "nav-link active data-loaded";
-            }
-
-            @Override
-            protected String getLastTabCssClass() {
-                return "nav-link data-loaded";
-            }
-
-            @Override
-            protected WebMarkupContainer newTabsContainer(final String id) {
-                WebMarkupContainer container = super.newTabsContainer(id);
-                container.add(new org.apache.wicket.AttributeModifier("class", "nav nav-tabs"));
-                return container;
-            }
-        };
-
-        tabbedPanel.setOutputMarkupId(true);
-        tabbedPanel.setVisible(true); // Show tabs only after data is loaded
-        form.add(tabbedPanel);
-    }
-
-    private List<ITab> createTabsFromWeeks(List<String> distinctWeeks, List<SalesOrder> allItems) {
-        List<ITab> tabs = new ArrayList<>();
-
-        for (String week : distinctWeeks) {
-            final List<SalesOrder> filteredSalesOrders = allItems.stream()
-                    .filter(order -> week.equals(order.getRequestedDeliveryWeek()))
-                    .collect(Collectors.toList());
-
-            tabs.add(new AbstractTab(Model.of("Week " + week)) {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public WebMarkupContainer getPanel(String panelId) {
-                    return new SalesOrderPanel(panelId, filteredSalesOrders, plannedOrderList, productionOrderList);
-                }
-            });
+    private void updateTableWithData(AjaxRequestTarget target) {
+        // Remove existing panel if present
+        if (salesOrderPanel != null) {
+            tableContainer.remove(salesOrderPanel);
         }
 
-        return tabs;
+        // Create new sales order panel with all data and dropdown support
+        salesOrderPanel = new SalesOrderPanel("salesOrderPanel",
+                allSalesOrderList, plannedOrderList, productionOrderList);
+
+        tableContainer.add(salesOrderPanel);
+        tableContainer.setVisible(true);
     }
 
     private List<String> getDistinctWeeks(List<SalesOrder> salesOrders) {
