@@ -50,13 +50,13 @@ body {
 
 .center-area {
     margin-left: 240px; /* Leave space for the menu bar */
-    padding: 30px;
-    margin-top: 120px; /* Adjust this value to prevent overlap with nav and header */
+    padding: 10px;
+    margin-top: 50px; /* Adjust this value to prevent overlap with nav and header */
     background: rgba(255,255,255,0.8);
     backdrop-filter: blur(10px);
-    border-radius: 20px;
-    margin-right: 20px;
-    margin-bottom: 100px;
+    border-radius: 10px;
+    margin-right: 10px;
+    margin-bottom: 20px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.1);
 }
 
@@ -79,25 +79,25 @@ footer {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
-    text-align: center;
-    position: fixed;
-    width: 100%;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-    backdrop-filter: blur(10px);
-}
+/*header {*/
+/*    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);*/
+/*    color: white;*/
+/*    padding: 20px;*/
+/*    text-align: center;*/
+/*    position: fixed;*/
+/*    width: 100%;*/
+/*    top: 0;*/
+/*    z-index: 100;*/
+/*    box-shadow: 0 2px 20px rgba(0,0,0,0.1);*/
+/*    backdrop-filter: blur(10px);*/
+/*}*/
 
 nav {
     position: fixed;
     z-index: 99;
     width: 100%;
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    top: 60px; /* Adjust this value based on the height of the header */
+    top: 5px; /* Adjust this value based on the height of the header */
     padding: 0 30px; /* Ensure same margin on the right as on the left */
     box-shadow: 0 2px 15px rgba(0,0,0,0.1);
 }
@@ -198,10 +198,10 @@ nav .wrapper {
 
 /* Date Range Form Styling */
 .date-range-container {
-    padding: 1.5rem;
+    padding: 1.0rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    margin-bottom: 2rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 

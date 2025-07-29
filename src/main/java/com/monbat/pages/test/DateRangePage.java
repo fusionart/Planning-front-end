@@ -34,6 +34,7 @@ public class DateRangePage extends Panel {
     private static final Logger LOG = LoggerFactory.getLogger(DateRangePage.class);
 
     private final TabbedPanel<WeekTab> tabbedPanel;
+    private final WebMarkupContainer tabsContainer;
     private final List<WeekTab> tabs = new ArrayList<>();
     private LocalDate startDateFilter;
     private LocalDate endDateFilter;
@@ -61,32 +62,46 @@ public class DateRangePage extends Panel {
         // Loading message components
         loadingContainer = new WebMarkupContainer("loadingContainer");
         loadingContainer.setOutputMarkupId(true);
-        loadingContainer.setVisible(false);
+        loadingContainer.setOutputMarkupPlaceholderTag(true); // Important for AJAX updates
+        loadingContainer.setVisible(false); // Initially hidden
+        add(loadingContainer);
 
         loadingMessage = new Label("loadingMessage", Model.of("Loading data..."));
         loadingMessage.setOutputMarkupId(true);
         loadingContainer.add(loadingMessage);
 
-        add(loadingContainer);
-
         form.add(new AjaxButton("apply") {
             @Override
             protected void onSubmit(AjaxRequestTarget target) {
+                // Hide tabs container first
+                tabsContainer.setVisible(false);
+
                 // Show loading message
                 loadingContainer.setVisible(true);
                 loadingMessage.setDefaultModelObject("Loading order data...");
-                target.add(loadingContainer);
 
-                // Load data immediately (no need for setTimeout)
+                // Update both containers immediately
+                target.add(loadingContainer, tabsContainer);
+
+                // Load data
                 loadOrderData(target);
             }
 
             @Override
             protected void onError(AjaxRequestTarget target) {
+                loadingContainer.setVisible(true);
                 loadingMessage.setDefaultModelObject("Error occurred during form submission");
-                target.add(loadingMessage);
+                tabsContainer.setVisible(false);
+                target.add(loadingContainer, tabsContainer);
             }
         });
+
+        // Create tabs container - initially hidden
+        tabsContainer = new WebMarkupContainer("tabsContainer");
+        tabsContainer.setOutputMarkupId(true);
+        tabsContainer.setOutputMarkupPlaceholderTag(true); // Important for AJAX updates
+        tabsContainer.setVisible(false); // Initially hidden
+        add(tabsContainer);
 
         tabbedPanel = new TabbedPanel<>("tabs", tabs) {
             @Override
@@ -113,12 +128,12 @@ public class DateRangePage extends Panel {
             }
         };
         tabbedPanel.setOutputMarkupId(true);
-        add(tabbedPanel);
+        tabsContainer.add(tabbedPanel);
     }
 
     private void loadOrderData(AjaxRequestTarget target) {
         try {
-            // Update loading message
+            // Update loading message during different phases
             loadingMessage.setDefaultModelObject("Fetching sales orders...");
             target.add(loadingMessage);
 
@@ -136,22 +151,35 @@ public class DateRangePage extends Panel {
             if (!salesOrders.isEmpty()) {
                 loadingMessage.setDefaultModelObject("Creating tabs...");
                 target.add(loadingMessage);
+
+                // Update tabs data
                 updateTabs(salesOrders, plannedOrders, productionOrders);
 
-                // Hide loading message when done
+                // Hide loading message and show tabs when done
                 loadingContainer.setVisible(false);
-                target.add(loadingContainer);
-                target.add(tabbedPanel);
+                tabsContainer.setVisible(true); // Show tabs container after data is loaded
+
+                target.add(loadingContainer, tabsContainer);
+
+                info("Loaded " + getDistinctWeeks(salesOrders).size() + " delivery weeks");
             } else {
+                // Clear tabs and keep container hidden
                 tabs.clear();
-                loadingMessage.setDefaultModelObject("No orders found for the selected date range.");
-                target.add(loadingMessage);
+                loadingContainer.setVisible(false);
+                tabsContainer.setVisible(false); // Keep tabs hidden if no data
+
+                target.add(loadingContainer, tabsContainer);
                 info("No orders found for the selected date range.");
             }
         } catch (Exception e) {
             LOG.error("Error loading order data", e);
+
+            // Show error message and hide tabs
+            loadingContainer.setVisible(true);
             loadingMessage.setDefaultModelObject("Failed to load data: " + e.getMessage());
-            target.add(loadingMessage);
+            tabsContainer.setVisible(false); // Keep tabs hidden on error
+
+            target.add(loadingContainer, tabsContainer);
             error("Failed to load data: " + e.getMessage());
         }
     }

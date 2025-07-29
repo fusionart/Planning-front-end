@@ -16,12 +16,12 @@
         </form>
 
         <!-- Loading message container -->
-        <div wicket:id="loadingContainer" class="loading-message" style="display: none;">
-            <div wicket:id="loadingMessage" class="alert alert-info">Loading data...</div>
+        <div wicket:id="loadingContainer" class="loading-message" style="margin-top: 1rem;">
+            <div wicket:id="loadingMessage" class="alert alert-info" style="margin-bottom: 0;">Loading data...</div>
         </div>
 
-        <!-- Tabs container -->
-        <div class="week-tabs-container">
+        <!-- Tabs container - initially hidden, shown only after Apply button -->
+        <div wicket:id="tabsContainer" class="week-tabs-container">
             <div wicket:id="tabs" class="week-tabs"></div>
         </div>
     </div>

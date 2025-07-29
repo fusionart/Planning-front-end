@@ -56,13 +56,22 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         add(new Behavior() {
             @Override
             public void renderHead(Component component, IHeaderResponse response) {
-                // Add custom CSS for proper tab styling
+                // Add custom CSS for proper tab styling and prevent clicks
                 response.render(OnDomReadyHeaderItem.forScript(
-                        "// Ensure tabs are properly styled" +
+                        "// Ensure tabs are properly styled and prevent navigation" +
                                 "$('.tabpanel').addClass('nav nav-tabs');" +
                                 "$('.tabpanel li').addClass('nav-item');" +
                                 "$('.tabpanel li a').addClass('nav-link');" +
                                 "$('.tabpanel li.selected a').addClass('active');" +
+
+                                // Prevent tab clicks from navigating until data is loaded
+                                "$('.tabpanel li a').on('click', function(e) {" +
+                                "   if (!$(this).hasClass('data-loaded')) {" +
+                                "       e.preventDefault();" +
+                                "       e.stopPropagation();" +
+                                "       return false;" +
+                                "   }" +
+                                "});" +
 
                                 "const problematicTables = [];" +
                                 "document.querySelectorAll('.table').forEach(table => {" +
@@ -78,9 +87,10 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         // Loading container and label
         loadingContainer = new WebMarkupContainer("loadingContainer");
         loadingContainer.setOutputMarkupId(true);
+        loadingContainer.setVisible(false); // Initially hidden
         add(loadingContainer);
 
-        loadingLabel = new Label("loadingLabel", Model.of("Loading sales order from SAP ..."));
+        loadingLabel = new Label("loadingLabel", Model.of(""));
         loadingLabel.setOutputMarkupId(true);
         loadingContainer.add(loadingLabel);
 
@@ -122,13 +132,13 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         feedback.setOutputMarkupId(true);
         form.add(feedback);
 
-        // Initialize TabbedPanel with empty tabs - use standard Wicket TabbedPanel with proper CSS
+        // Initialize TabbedPanel with empty tabs - initially hidden
         tabbedPanel = new TabbedPanel<ITab>("tabs", new ArrayList<>()) {
             private static final long serialVersionUID = 1L;
 
             @Override
             protected String getTabContainerCssClass() {
-                return "nav nav-tabs"; // Bootstrap tab classes
+                return "nav nav-tabs";
             }
 
             @Override
@@ -143,13 +153,13 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         };
 
         tabbedPanel.setOutputMarkupId(true);
-        tabbedPanel.setVisible(false); // Initially hidden
+        tabbedPanel.setVisible(false); // Initially hidden - only show after Apply is clicked
         form.add(tabbedPanel);
     }
 
     private DatePicker getStartDatePicker() {
         Options options = new Options();
-        options.set("dateFormat", "'dd.mm.yy'"); // Note the quotes around the format
+        options.set("dateFormat", "'dd.mm.yy'");
         options.set("firstDay", 1);
         options.set("changeMonth", true);
         options.set("changeYear", true);
@@ -162,7 +172,7 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
 
     private DatePicker getEndDatePicker() {
         Options options = new Options();
-        options.set("dateFormat", "'dd.mm.yy'"); // Note the quotes around the format
+        options.set("dateFormat", "'dd.mm.yy'");
         options.set("firstDay", 1);
         options.set("changeMonth", true);
         options.set("changeYear", true);
@@ -174,9 +184,10 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
     }
 
     private void loadSalesOrderData(AjaxRequestTarget target) {
-        loadingContainer.setVisible(true); // Show loading indicator
+        // Show loading indicator
+        loadingContainer.setVisible(true);
         loadingLabel.setDefaultModelObject("Loading sales order from SAP ...");
-        target.add(loadingContainer, feedback); // Update loading status immediately
+        target.add(loadingContainer, feedback);
 
         try {
             List<SalesOrder> salesOrderList = SalesOrderApiClient.getData(startDateFilter, endDateFilter);
@@ -184,21 +195,19 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
             productionOrderList = ProductionOrderApiClient.getData(startDateFilter, endDateFilter);
 
             if (!salesOrderList.isEmpty()) {
-                loadingContainer.setVisible(false);
                 updateTabsWithData(salesOrderList, target);
+                info("Loaded " + getDistinctWeeks(salesOrderList).size() + " delivery weeks");
             } else {
-                loadingContainer.setVisible(false);
-                tabbedPanel.setVisible(false); // Hide tabs if no data
+                tabbedPanel.setVisible(false);
                 info("No sales orders found for the selected date range.");
-                target.add(tabbedPanel, feedback);
             }
         } catch (Exception e) {
             LOG.error("Error loading sales order data", e);
             error("Failed to load sales order data: " + e.getMessage());
-            target.add(feedback);
+            tabbedPanel.setVisible(false);
         } finally {
             loadingContainer.setVisible(false);
-            target.add(loadingContainer);
+            target.add(loadingContainer, feedback, tabbedPanel);
         }
     }
 
@@ -212,23 +221,23 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         Form<?> form = (Form<?>) tabbedPanel.getParent();
         form.remove(tabbedPanel);
 
-        // Use standard Wicket TabbedPanel for proper tab styling with Bootstrap classes
+        // Create new TabbedPanel with data
         tabbedPanel = new TabbedPanel<ITab>("tabs", tabs) {
             private static final long serialVersionUID = 1L;
 
             @Override
             protected String getTabContainerCssClass() {
-                return "nav nav-tabs"; // Bootstrap tab classes
+                return "nav nav-tabs";
             }
 
             @Override
             protected String getSelectedTabCssClass() {
-                return "nav-link active";
+                return "nav-link active data-loaded";
             }
 
             @Override
             protected String getLastTabCssClass() {
-                return "nav-link";
+                return "nav-link data-loaded";
             }
 
             @Override
@@ -240,11 +249,8 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
         };
 
         tabbedPanel.setOutputMarkupId(true);
-        tabbedPanel.setVisible(true); // Ensure the new panel is visible
-        form.add(tabbedPanel); // Add the new panel to the form
-
-        info("Loaded " + tabs.size() + " delivery weeks");
-        target.add(form); // Update the entire form to ensure the new tabbedPanel is rendered
+        tabbedPanel.setVisible(true); // Show tabs only after data is loaded
+        form.add(tabbedPanel);
     }
 
     private List<ITab> createTabsFromWeeks(List<String> distinctWeeks, List<SalesOrder> allItems) {
@@ -273,7 +279,6 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
                 .map(SalesOrder::getRequestedDeliveryWeek)
                 .distinct()
                 .sorted((week1, week2) -> {
-                    // Parse week and year from the strings
                     String[] parts1 = week1.split("/");
                     String[] parts2 = week2.split("/");
 
@@ -283,7 +288,6 @@ public class SalesOrderDynamicTabsPage extends Panel implements Serializable {
                     int weekNum2 = Integer.parseInt(parts2[0]);
                     int year2 = Integer.parseInt(parts2[1]);
 
-                    // First compare by year, then by week number
                     if (year1 != year2) {
                         return Integer.compare(year1, year2);
                     } else {

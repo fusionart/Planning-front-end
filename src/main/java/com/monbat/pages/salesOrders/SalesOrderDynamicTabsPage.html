@@ -1,17 +1,30 @@
 <wicket:panel>
-    <div wicket:id="loadingContainer">
-        <span wicket:id="loadingLabel"></span>
+    <!-- Loading indicator - only shown when loading -->
+    <div wicket:id="loadingContainer" class="loading-container">
+        <span wicket:id="loadingLabel" class="loading-text"></span>
     </div>
 
+    <!-- Main form with date range controls -->
     <form wicket:id="form">
-        <div>
-            <input type="text" wicket:id="startDatePicker" placeholder="dd.mm.yyyy" />
-            <input type="text" wicket:id="endDatePicker" placeholder="dd.mm.yyyy" />
-            <button wicket:id="applyDateRangeButton">Apply</button>
+        <!-- Date range controls with smaller padding -->
+        <div class="date-range-container" style="padding: 1rem; margin-bottom: 1rem;">
+            <div class="date-range-controls">
+                <div class="date-picker">
+                    <label>From:</label>
+                    <input type="text" wicket:id="startDatePicker" placeholder="dd.mm.yyyy" />
+                </div>
+                <div class="date-picker">
+                    <label>To:</label>
+                    <input type="text" wicket:id="endDatePicker" placeholder="dd.mm.yyyy" />
+                </div>
+                <button wicket:id="applyDateRangeButton" class="apply-button">Apply</button>
+            </div>
         </div>
 
+        <!-- Feedback panel for messages -->
         <div wicket:id="feedback"></div>
+
+        <!-- Tabs container - only shown after Apply is clicked and data is loaded -->
         <div wicket:id="tabs"></div>
     </form>
 </wicket:panel>
-
