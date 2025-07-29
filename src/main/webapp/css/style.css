@@ -206,6 +206,7 @@ nav .wrapper {
 }
 
 .date-range-controls {
+    padding: 1.0rem;
     display: flex;
     align-items: center;
     gap: 2rem;
