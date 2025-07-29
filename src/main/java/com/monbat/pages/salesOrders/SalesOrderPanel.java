@@ -1,6 +1,7 @@
 package com.monbat.pages.salesOrders;
 
 import com.monbat.components.genericTable.ColumnDefinition;
+import com.monbat.components.genericTable.DynamicColumnDefinition;
 import com.monbat.components.genericTable.PropertyColumnDefinition;
 import com.monbat.models.dto.sap.PlannedOrder;
 import com.monbat.models.dto.sap.ProductionOrder;
@@ -195,7 +196,7 @@ public class SalesOrderPanel extends Panel implements Serializable {
         List<ColumnDefinition<SalesOrderMain>> columns = new ArrayList<>();
         Map<String, String> dictionary = CustomDictionary.getDictionary(TableNames.SALES_ORDER_WITH_ITEM);
 
-        // Add standard property columns from SalesOrderItemRow
+        // Add standard property columns from SalesOrderMain (excluding dynamicSoItems)
         Field[] fields = SalesOrderMain.class.getDeclaredFields();
         for (Field field : fields) {
             String fieldName = field.getName();
@@ -213,7 +214,44 @@ public class SalesOrderPanel extends Panel implements Serializable {
             ));
         }
 
+        // Get all unique sales order numbers from the data to create dynamic columns
+        Set<String> salesOrderNumbers = extractUniqueSalesOrderNumbers();
+
+        // Create dynamic columns for each sales order number
+        for (String salesOrderNumber : salesOrderNumbers) {
+            // Add three subcolumns for each sales order
+            columns.add(new DynamicColumnDefinition(salesOrderNumber, "quantity"));
+            columns.add(new DynamicColumnDefinition(salesOrderNumber, "plannedOrder"));
+            columns.add(new DynamicColumnDefinition(salesOrderNumber, "productionOrder"));
+        }
+
         return columns;
+    }
+
+    private Set<String> extractUniqueSalesOrderNumbers() {
+        Set<String> salesOrderNumbers = new TreeSet<>(); // TreeSet for natural ordering
+
+        // We need to examine the actual data to find all possible sales order numbers
+        // This requires access to the data model
+        try {
+            // Get sample of data to determine dynamic columns
+            List<SalesOrderMain> sampleData = generateSalesOrderMainData(salesOrders, plannedOrderList, productionOrderList);
+
+            for (SalesOrderMain item : sampleData) {
+                if (item.getDynamicSoItems() != null) {
+                    salesOrderNumbers.addAll(item.getDynamicSoItems().keySet());
+                }
+            }
+        } catch (Exception e) {
+            // Fallback: extract from salesOrders list
+            salesOrderNumbers.addAll(
+                    salesOrders.stream()
+                            .map(SalesOrder::getSalesOrderNumber)
+                            .collect(Collectors.toSet())
+            );
+        }
+
+        return salesOrderNumbers;
     }
 
     private boolean shouldSkipField(String fieldName) {
@@ -240,6 +278,8 @@ public class SalesOrderPanel extends Panel implements Serializable {
                 // Add all standard fields
                 Field[] fields = SalesOrderMain.class.getDeclaredFields();
                 for (Field field : fields) {
+                    if (shouldSkipField(field.getName())) continue;
+
                     try {
                         field.setAccessible(true);
                         Object value = field.get(item);
@@ -248,6 +288,16 @@ public class SalesOrderPanel extends Panel implements Serializable {
                         searchableValues.add("");
                     }
                 }
+
+                // Add dynamic column values for filtering
+                if (item.getDynamicSoItems() != null) {
+                    for (SalesOrderMainItem dynamicItem : item.getDynamicSoItems().values()) {
+                        searchableValues.add(dynamicItem.getQuantity() != null ? dynamicItem.getQuantity().toString() : "");
+                        searchableValues.add(dynamicItem.getPlannedOrder() != null ? dynamicItem.getPlannedOrder() : "");
+                        searchableValues.add(dynamicItem.getProductionOrder() != null ? dynamicItem.getProductionOrder() : "");
+                    }
+                }
+
                 return searchableValues;
             }
         };

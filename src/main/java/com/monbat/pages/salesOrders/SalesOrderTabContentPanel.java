@@ -15,12 +15,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Content panel for sales order tabs with dynamic column support
+ */
 public class SalesOrderTabContentPanel extends Panel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public SalesOrderTabContentPanel(String id,
-                                     List<SalesOrder> salesOrdersForTab,
+                                     List<SalesOrder> salesOrders,
                                      List<PlannedOrder> plannedOrderList,
                                      List<ProductionOrder> productionOrderList,
                                      IModel<Collection<SalesOrderMain>> model,
@@ -29,6 +32,7 @@ public class SalesOrderTabContentPanel extends Panel implements Serializable {
         super(id);
         setOutputMarkupId(true);
 
+        // Use the existing generic data table panel with dynamic columns
         GenericDataTablePanel<SalesOrderMain> dataTablePanel = new GenericDataTablePanel<>(
                 "content",
                 model,
@@ -36,7 +40,6 @@ public class SalesOrderTabContentPanel extends Panel implements Serializable {
                 filterFunction
         );
 
-        dataTablePanel.setOutputMarkupId(true);
         add(dataTablePanel);
     }
 }
