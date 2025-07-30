@@ -414,6 +414,7 @@ nav .wrapper {
     }
 }
 
+/* Simplified Progress Bar CSS - Pure Wicket Compatible */
 .progress-container {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -422,8 +423,6 @@ nav .wrapper {
     margin: 20px 0;
     box-shadow: 0 4px 15px rgba(102,126,234,0.3);
     border: 2px solid #5a67d8;
-    display: block !important;
-    visibility: visible !important;
 }
 
 .progress-header {
@@ -441,6 +440,7 @@ nav .wrapper {
     font-size: 16px;
     font-weight: 500;
     color: white;
+    flex: 1;
 }
 
 .progress-percentage {
@@ -451,10 +451,13 @@ nav .wrapper {
     padding: 5px 15px;
     border-radius: 15px;
     border: 1px solid rgba(255,255,255,0.3);
+    min-width: 60px;
+    text-align: center;
 }
 
 .progress-bar-container {
     position: relative;
+    width: 100%;
 }
 
 .progress-bar {
@@ -465,8 +468,10 @@ nav .wrapper {
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.3);
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
 }
 
+/* Default progress bar fill - will be overridden by inline styles */
 .progress-bar-fill {
     height: 100%;
     width: 0%;
@@ -474,21 +479,50 @@ nav .wrapper {
     border-radius: 10px;
     transition: width 0.5s ease;
     box-shadow: 0 2px 8px rgba(255,107,107,0.4);
+    display: block;
 }
 
-/* Make sure it's always visible when the container is shown */
-.progress-container[style*="display: block"],
-.progress-container[style*="visibility: visible"] {
+/* Specific progress states for CSS class approach */
+.progress-5 { width: 5% !important; }
+.progress-15 { width: 15% !important; }
+.progress-40 { width: 40% !important; }
+.progress-45 { width: 45% !important; }
+.progress-70 { width: 70% !important; }
+.progress-75 { width: 75% !important; }
+.progress-90 { width: 90% !important; }
+.progress-95 { width: 95% !important; }
+.progress-100 { width: 100% !important; }
+
+/* Color variations for different progress levels */
+.progress-5, .progress-15 {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%) !important;
+}
+.progress-40, .progress-45 {
+    background: linear-gradient(135deg, #ff8e53 0%, #ffa726 100%) !important;
+}
+.progress-70, .progress-75 {
+    background: linear-gradient(135deg, #ffa726 0%, #4caf50 100%) !important;
+}
+.progress-90, .progress-95, .progress-100 {
+    background: linear-gradient(135deg, #4caf50 0%, #2196f3 100%) !important;
+}
+
+/* Ensure visibility */
+.progress-bar-fill[style] {
     display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
 }
 
-/* Override any hiding styles */
-.progress-container {
-    opacity: 1 !important;
-    z-index: 1000 !important;
-    position: relative !important;
+/* Responsive design */
+@media (max-width: 768px) {
+    .progress-info {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .progress-message {
+        text-align: center;
+    }
 }
 
 /* Additional styles for better integration */

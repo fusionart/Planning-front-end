@@ -15,6 +15,7 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
+import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
@@ -46,6 +47,9 @@ public class DateRangePage extends Panel {
     private Label progressMessage;
     private Label progressPercentage;
     private WebMarkupContainer progressBarFill;
+
+    private IModel<String> progressWidthModel = Model.of("0%");
+    private IModel<String> progressStyleModel = Model.of("");
 
     // Loading state and timer reference
     private boolean isLoading = false;
@@ -98,7 +102,18 @@ public class DateRangePage extends Panel {
         progressBar.setOutputMarkupId(true);
         container.add(progressBar);
 
-        progressBarFill = new WebMarkupContainer("progressBarFill");
+        // Create progress bar fill with model-based styling
+        progressBarFill = new WebMarkupContainer("progressBarFill") {
+            @Override
+            protected void onComponentTag(ComponentTag tag) {
+                super.onComponentTag(tag);
+                // Apply the style directly to the tag
+                String currentStyle = progressStyleModel.getObject();
+                if (currentStyle != null && !currentStyle.isEmpty()) {
+                    tag.put("style", currentStyle);
+                }
+            }
+        };
         progressBarFill.setOutputMarkupId(true);
         progressBar.add(progressBarFill);
 
@@ -246,18 +261,37 @@ public class DateRangePage extends Panel {
 
     private void updateProgress(AjaxRequestTarget target, int progress, String message) {
         if (progressMessage != null && progressPercentage != null && progressBarFill != null) {
+            // Update text components
             progressMessage.setDefaultModelObject(message);
             progressPercentage.setDefaultModelObject(progress + "%");
 
+            // Create the style string for the progress bar fill
             String fillStyle = String.format(
                     "width: %d%%; " +
+                            "height: 100%%; " +
                             "background: linear-gradient(135deg, #ff6b6b 0%%, #ff8e53 50%%, #ffffff 100%%); " +
                             "transition: width 0.5s ease; " +
-                            "box-shadow: 0 2px 8px rgba(255,107,107,0.4);",
+                            "box-shadow: 0 2px 8px rgba(255,107,107,0.4); " +
+                            "border-radius: 10px; " +
+                            "display: block;",
                     progress
             );
+
+            // Apply the style attribute
             progressBarFill.add(org.apache.wicket.AttributeModifier.replace("style", fillStyle));
 
+            // Also add a CSS class for additional styling control
+            String cssClass = "progress-bar-fill progress-" + progress;
+            progressBarFill.add(org.apache.wicket.AttributeModifier.replace("class", cssClass));
+
+            // Add debug logging to verify the update
+            LOG.debug("Progress updated to {}% with message: {}", progress, message);
+            LOG.debug("Applied style: {}", fillStyle);
+
+            // Make sure to add the components to the AJAX target
+            target.add(progressMessage);
+            target.add(progressPercentage);
+            target.add(progressBarFill);
             target.add(progressContainer);
         }
     }
