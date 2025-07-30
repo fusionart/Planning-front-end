@@ -3,7 +3,6 @@ package com.monbat.components.genericTable;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
-import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColumn;
 import org.apache.wicket.model.Model;
 
 import java.io.Serializable;
@@ -31,9 +30,13 @@ public class PropertyColumnDefinition<T extends Serializable> implements ColumnD
 
     @Override
     public IColumn<T, String> createColumn() {
-        return new PropertyColumn<>(Model.of(header),
-                sortable ? propertyExpression : null,
-                propertyExpression);
+        // Use our custom AggregatablePropertyColumn instead of regular PropertyColumn
+        return new AggregatablePropertyColumn<>(
+                Model.of(header),
+                sortable ? propertyExpression : null,  // Sort property (null if not sortable)
+                propertyExpression,                     // Property expression for data access
+                aggregatetable                          // Whether this column should be aggregated
+        );
     }
 
     @Override

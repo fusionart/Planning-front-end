@@ -138,7 +138,12 @@ public class GenericDataTablePanel<T extends Serializable> extends Panel {
 
         // Create the data table with footer
         DataTable<T, String> table = new DefaultDataTable<>(id, columns, dataProvider, rowsPerPage.getObject());
-        table.addBottomToolbar(new GenericAggregateToolbar<>(table, dataProvider));
+
+        // Add the aggregate footer toolbar with a proper supplier
+        table.addBottomToolbar(new GenericAggregateToolbar<>(table, () -> {
+            // Return iterator for current filtered data
+            return new ArrayList<>(filteredData).iterator();
+        }));
 
         return table;
     }

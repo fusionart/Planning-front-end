@@ -2,36 +2,31 @@ package com.monbat.components.genericTable;
 
 import com.monbat.models.dto.sap.sales_order.SalesOrderMain;
 import com.monbat.models.dto.sap.sales_order.SalesOrderMainItem;
-import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
+import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
+import org.apache.wicket.extensions.markup.html.repeater.data.table.AbstractColumn;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.repeater.Item;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.Model;
 
 import java.io.Serializable;
 
 /**
- * Custom column definition for dynamic columns based on SalesOrderMain.dynamicSoItems
+ * A custom column that can be easily identified for aggregation
  */
-public class DynamicColumnDefinition implements ColumnDefinition<SalesOrderMain>, Serializable {
+public class AggregatableDynamicColumn extends AbstractColumn<SalesOrderMain, String> implements Serializable {
     private final String salesOrderNumber;
-    private final String subColumnType; // "quantity", "plannedOrder", or "productionOrder"
-    private final String header;
-    private final boolean aggregatable; // New field to indicate if this column should be aggregated
+    private final String subColumnType;
+    private final boolean aggregatable;
 
-    public DynamicColumnDefinition(String salesOrderNumber, String subColumnType) {
+    public AggregatableDynamicColumn(String salesOrderNumber, String subColumnType, boolean aggregatable) {
+        super(Model.of(createHeader(salesOrderNumber, subColumnType)), null);
         this.salesOrderNumber = salesOrderNumber;
         this.subColumnType = subColumnType;
-        this.header = createHeader(salesOrderNumber, subColumnType);
-        // Only quantity columns should be aggregatable
-        this.aggregatable = "quantity".equals(subColumnType);
-    }
-
-    // Constructor with explicit aggregatable flag (for future flexibility)
-    public DynamicColumnDefinition(String salesOrderNumber, String subColumnType, boolean aggregatable) {
-        this.salesOrderNumber = salesOrderNumber;
-        this.subColumnType = subColumnType;
-        this.header = createHeader(salesOrderNumber, subColumnType);
         this.aggregatable = aggregatable;
     }
 
-    private String createHeader(String salesOrderNumber, String subColumnType) {
+    private static String createHeader(String salesOrderNumber, String subColumnType) {
         String subHeader = switch (subColumnType) {
             case "quantity" -> "Qty";
             case "plannedOrder" -> "Planned Order";
@@ -42,9 +37,11 @@ public class DynamicColumnDefinition implements ColumnDefinition<SalesOrderMain>
     }
 
     @Override
-    public IColumn<SalesOrderMain, String> createColumn() {
-        // Use the new AggregatableDynamicColumn instead of AbstractColumn
-        return new AggregatableDynamicColumn(salesOrderNumber, subColumnType, aggregatable);
+    public void populateItem(Item<ICellPopulator<SalesOrderMain>> cellItem,
+                             String componentId, IModel<SalesOrderMain> rowModel) {
+        SalesOrderMain salesOrderMain = rowModel.getObject();
+        String value = extractValue(salesOrderMain);
+        cellItem.add(new Label(componentId, value));
     }
 
     private String extractValue(SalesOrderMain salesOrderMain) {
@@ -65,18 +62,7 @@ public class DynamicColumnDefinition implements ColumnDefinition<SalesOrderMain>
         };
     }
 
-    @Override
-    public String getHeader() {
-        return header;
-    }
-
-    @Override
-    public String getPropertyExpression() {
-        // Return a property expression that can be used for sorting if needed
-        return "dynamicSoItems." + salesOrderNumber + "." + subColumnType;
-    }
-
-    // Getter methods for the toolbar to access these values
+    // Getters for the aggregation toolbar
     public String getSalesOrderNumber() {
         return salesOrderNumber;
     }
@@ -87,6 +73,10 @@ public class DynamicColumnDefinition implements ColumnDefinition<SalesOrderMain>
 
     public boolean isAggregatable() {
         return aggregatable;
+    }
+
+    public String getHeader() {
+        return String.valueOf(getDisplayModel().getObject());
     }
 
     // Method to extract the numeric value for aggregation

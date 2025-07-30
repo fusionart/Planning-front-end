@@ -1,8 +1,6 @@
 package com.monbat.pages.salesOrders;
 
-import com.monbat.components.genericTable.ColumnDefinition;
-import com.monbat.components.genericTable.DynamicColumnDefinition;
-import com.monbat.components.genericTable.PropertyColumnDefinition;
+import com.monbat.components.genericTable.*;
 import com.monbat.models.dto.sap.PlannedOrder;
 import com.monbat.models.dto.sap.ProductionOrder;
 import com.monbat.models.dto.sap.sales_order.SalesOrder;
@@ -44,14 +42,12 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final List<SalesOrder> allSalesOrders;
-    private final List<PlannedOrder> plannedOrderList;
-    private final List<ProductionOrder> productionOrderList;
 
-    private List<SalesOrderMain> allData;
+    private final List<SalesOrderMain> allData;
     private List<SalesOrderMain> filteredData;
-    private String filterText = "";
-    private String filterColumn = "all";
-    private String selectedPlant = "All"; // Default to "All"
+    private final String filterText = "";
+    private final String filterColumn = "all";
+    private final String selectedPlant = "All"; // Default to "All"
     private final DataTable<SalesOrderMain, String> dataTable;
     private final IModel<Integer> rowsPerPage = Model.of(10);
     private final List<ColumnDefinition<SalesOrderMain>> columnDefinitions;
@@ -65,8 +61,6 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
         setOutputMarkupId(true);
 
         this.allSalesOrders = salesOrders;
-        this.plannedOrderList = plannedOrderList;
-        this.productionOrderList = productionOrderList;
 
         // Generate all data initially
         this.allData = generateSalesOrderMainData(allSalesOrders, plannedOrderList, productionOrderList);
@@ -109,7 +103,8 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
             @Override
             protected void onUpdate(AjaxRequestTarget target) {
                 filterData();
-                target.add(dataTable);
+                // Refresh the entire table container to update both data and footer
+                target.add(dataTable.getParent()); // This refreshes the tableContainer
             }
         });
         form.add(filterField);
@@ -125,7 +120,8 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
             @Override
             protected void onUpdate(AjaxRequestTarget target) {
                 filterData();
-                target.add(dataTable);
+                // Refresh the entire table container to update both data and footer
+                target.add(dataTable.getParent()); // This refreshes the tableContainer
             }
         });
         form.add(columnSelector);
@@ -145,7 +141,8 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
             @Override
             protected void onUpdate(AjaxRequestTarget target) {
                 filterData();
-                target.add(dataTable);
+                // Refresh the entire table container to update both data and footer
+                target.add(dataTable.getParent()); // This refreshes the tableContainer
             }
         });
         form.add(plantDropdown);
@@ -175,11 +172,6 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
         form.add(rowsPerPageChoice);
     }
 
-    private void updateDataForSelectedWeek() {
-        // This method is no longer needed since we're filtering by plant, not changing the base data
-        // The filtering is now handled in the filterData() method
-    }
-
     private DataTable<SalesOrderMain, String> createDataTable(String id) {
         List<IColumn<SalesOrderMain, String>> columns = new ArrayList<>();
 
@@ -189,7 +181,44 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
         }
 
         GenericDataProvider dataProvider = new GenericDataProvider();
-        return new DefaultDataTable<>(id, columns, dataProvider, rowsPerPage.getObject());
+        DataTable<SalesOrderMain, String> table = new DefaultDataTable<>(id, columns, dataProvider, rowsPerPage.getObject());
+
+        // Add the aggregate footer toolbar
+        table.addBottomToolbar(new GenericAggregateToolbar<>(table, () -> {
+            // Provide the current filtered data to the toolbar
+            List<SalesOrderMain> currentData = new ArrayList<>(filteredData);
+
+            // Apply current sorting if any
+            if (dataProvider.getSort() != null) {
+                String sortProperty = dataProvider.getSort().getProperty();
+                boolean ascending = dataProvider.getSort().isAscending();
+
+                currentData.sort((o1, o2) -> {
+                    try {
+                        Object val1 = PropertyResolver.getValue(sortProperty, o1);
+                        Object val2 = PropertyResolver.getValue(sortProperty, o2);
+
+                        if (val1 == null && val2 == null) return 0;
+                        if (val1 == null) return ascending ? -1 : 1;
+                        if (val2 == null) return ascending ? 1 : -1;
+
+                        if (val1 instanceof Comparable && val2 instanceof Comparable) {
+                            @SuppressWarnings("unchecked")
+                            int compareResult = ((Comparable<Object>) val1).compareTo(val2);
+                            return ascending ? compareResult : -compareResult;
+                        }
+
+                        return String.valueOf(val1).compareTo(String.valueOf(val2));
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                });
+            }
+
+            return currentData.iterator();
+        }));
+
+        return table;
     }
 
     private void filterData() {
@@ -334,12 +363,21 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
 
             assert dictionary != null;
             String displayName = dictionary.getOrDefault(fieldName, fieldName);
-            columns.add(new PropertyColumnDefinition<>(
+
+            // Determine if this field should be aggregatable
+            boolean isAggregatable = isNumeric(field.getType());
+
+            System.out.println("Creating standard column: " + fieldName + " (" + displayName + ") - Aggregatable: " + isAggregatable);
+
+            // IMPORTANT: Make sure we're creating PropertyColumnDefinition objects, not regular PropertyColumns
+            PropertyColumnDefinition<SalesOrderMain> columnDef = new PropertyColumnDefinition<>(
                     displayName,
                     fieldName,
                     true,  // sortable
-                    isNumeric(field.getType())  // aggregatable
-            ));
+                    isAggregatable  // aggregatable
+            );
+
+            columns.add(columnDef);
         }
 
         // Get all unique sales order numbers from the current data to create dynamic columns
@@ -348,11 +386,15 @@ public class SalesOrderTableWithDropdown extends Panel implements Serializable {
         // Create dynamic columns for each sales order number
         for (String salesOrderNumber : salesOrderNumbers) {
             // Add three subcolumns for each sales order
-            columns.add(new DynamicColumnDefinition(salesOrderNumber, "quantity"));
-            columns.add(new DynamicColumnDefinition(salesOrderNumber, "plannedOrder"));
-            columns.add(new DynamicColumnDefinition(salesOrderNumber, "productionOrder"));
+            // Only quantity columns are aggregatable
+            columns.add(new DynamicColumnDefinition(salesOrderNumber, "quantity", true));  // Aggregatable
+            columns.add(new DynamicColumnDefinition(salesOrderNumber, "plannedOrder", false));  // Not aggregatable
+            columns.add(new DynamicColumnDefinition(salesOrderNumber, "productionOrder", false));  // Not aggregatable
+
+            System.out.println("Created dynamic columns for sales order: " + salesOrderNumber);
         }
 
+        System.out.println("Total columns created: " + columns.size());
         return columns;
     }
 
