@@ -15,9 +15,19 @@
             </div>
         </form>
 
-        <!-- Loading message container -->
-        <div wicket:id="loadingContainer" class="loading-message" style="margin-top: 1rem;">
-            <div wicket:id="loadingMessage" class="alert alert-info" style="margin-bottom: 0;">Loading data...</div>
+        <!-- Progress indicator container - MATCHES JAVA CODE -->
+        <div wicket:id="progressContainer" class="progress-container">
+            <div class="progress-header">
+                <div class="progress-info">
+                    <span wicket:id="progressMessage" class="progress-message">Loading data from SAP...</span>
+                    <span wicket:id="progressPercentage" class="progress-percentage">0%</span>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div wicket:id="progressBar" class="progress-bar">
+                    <div wicket:id="progressBarFill" class="progress-bar-fill"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Tabs container - initially hidden, shown only after Apply button -->
